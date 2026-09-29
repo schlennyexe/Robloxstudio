@@ -95,7 +95,7 @@ MODELS.shop = () => {
 
 MODELS.rebirth = () => {
   const g = new THREE.Group();
-  const base = mesh(new THREE.CylinderGeometry(0.92, 1.0, 0.2, 48), mat(0xd9ecff, { roughness: 0.4 }), 0, -0.66, 0);
+  const base = mesh(new THREE.CylinderGeometry(0.9, 0.98, 0.2, 48), mat(0x8ec8ff, { roughness: 0.4 }), 0, -0.66, 0);
   g.add(base);
   const ring = new THREE.Group();
   const arrow = (a0, a1) => {
@@ -124,15 +124,15 @@ MODELS.index = () => {
   g.add(rbox(1.22, 1.66, 0.42, 0.04, mat(0xfff6dc, { roughness: 0.5 }), 0.02, 0, 0));
   const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 0.2 : 0.42, a = -Math.PI / 2 + i * Math.PI / 5; i ? star.lineTo(Math.cos(a) * r, Math.sin(a) * r) : star.moveTo(Math.cos(a) * r, Math.sin(a) * r); } star.closePath();
   g.add(mesh(ext(star, 0.06, 0.05), mat(0xffc21a, { metalness: 0.3 }), 0.02, 0.1, 0.36));
-  g.add(rbox(0.2, 0.62, 0.04, 0.02, mat(0xff4757), 0.36, 0.98, 0.34));
+  g.add(rbox(0.2, 0.46, 0.04, 0.02, mat(0xff4757), 0.36, 0.86, 0.34));
   g.rotation.set(0.28, -0.7, 0.08); return g;
 };
 
 MODELS.drop = () => {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.SphereGeometry(1, 64, 64), mat(0x1fc8ff, { roughness: 0.2, emissive: 0x0a7fa6, emissiveIntensity: 0.3 })));
+  g.add(mesh(new THREE.SphereGeometry(1.08, 64, 64), mat(0x1fc8ff, { roughness: 0.2, emissive: 0x0a7fa6, emissiveIntensity: 0.3 })));
   g.add(mesh(new THREE.SphereGeometry(0.18, 20, 20), mat(0xffffff, { roughness: 0.1 }), -0.36, 0.5, 0.78));
-  const ring = mesh(new THREE.TorusGeometry(1.14, 0.13, 20, 80), mat(0xffc21a, { metalness: 0.35, roughness: 0.25 }));
+  const ring = mesh(new THREE.TorusGeometry(1.06, 0.11, 20, 80), mat(0xffc21a, { metalness: 0.35, roughness: 0.25 }));
   ring.rotation.set(1.05, 0.2, 0.55); g.add(ring);
   g.rotation.set(0.3, -0.4, 0); return g;
 };
@@ -145,9 +145,9 @@ MODELS.nut = () => {
 };
 
 MODELS.gear = () => {
-  const s = new THREE.Shape(); const N = 9;
+  const s = new THREE.Shape(); const N = 8;
   for (let i = 0; i < N; i++) { const a = i * 2 * Math.PI / N, w = Math.PI / N;
-    const pts = [[0.7, a - w * 0.95], [1.0, a - w * 0.42], [1.0, a + w * 0.42], [0.7, a + w * 0.95]];
+    const pts = [[0.62, a - w * 0.9], [1.0, a - w * 0.38], [1.0, a + w * 0.38], [0.62, a + w * 0.9]];
     pts.forEach(([r, t], k) => { const x = Math.cos(t) * r, y = Math.sin(t) * r; (i === 0 && k === 0) ? s.moveTo(x, y) : s.lineTo(x, y); }); }
   s.closePath(); const h = new THREE.Path(); h.absarc(0, 0, 0.32, 0, Math.PI * 2, true); s.holes.push(h);
   const g = new THREE.Group(); g.add(mesh(ext(s, 0.42, 0.09), mat(0xa468ff, { metalness: 0.2 })));

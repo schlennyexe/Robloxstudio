@@ -306,7 +306,7 @@ def main():
         br.close()
     sys.path.insert(0, os.path.dirname(__file__))
     import icons3d
-    ims = icons3d.render({n: v[3] for n, v in ICONS3D.items()}, 256, fill=0.93)
+    ims = icons3d.render({n: v[3] for n, v in ICONS3D.items()}, 256, fill=0.87)
     for n, (x, y, sz, _) in ICONS3D.items():
         atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
