@@ -22,6 +22,9 @@ local DEMO = true
 -- Es reicht die Zahl, z.B. "123456789". Leer lassen = das Skript zeichnet die Knöpfe selbst (schlichter).
 local ATLAS_ID = ""
 
+-- BOT-BILDER (optional, für Index und Banner): assets/ui/atlas_bots.png ebenso hochladen und die ID hier eintragen.
+local BOT_ATLAS_ID = ""
+
 -- Klick-Geräusche (optional). Leer lassen = stumm. Eigene Sounds: "rbxassetid://ZAHL"
 local SOUND_IDS = { click = "rbxasset://sounds/clickfast.wav", buy = "rbxasset://sounds/electronicpingshort.wav", hover = "" }
 
@@ -55,10 +58,28 @@ local SPR = {
 	potion_p = { 448, 448, 128, 128 },
 }
 
+-- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
+local BSPR = {
+	bot_toaster = { 0, 0, 192, 192 },
+	bot_wecker = { 192, 0, 192, 192 },
+	bot_katze = { 384, 0, 192, 192 },
+	bot_feuerwehr = { 576, 0, 192, 192 },
+	bot_drache = { 768, 0, 192, 192 },
+	bot_samurai = { 0, 192, 192, 192 },
+	bot_satellit = { 192, 192, 192, 192 },
+	bot_prototyp = { 384, 192, 192, 192 },
+}
+
 if ATLAS_ID:match("^%d+$") then
 	ATLAS_ID = "rbxassetid://" .. ATLAS_ID
 end
+if BOT_ATLAS_ID:match("^%d+$") then
+	BOT_ATLAS_ID = "rbxassetid://" .. BOT_ATLAS_ID
+end
 local useAtlas = ATLAS_ID ~= ""
+local useBots = BOT_ATLAS_ID ~= ""
+-- ein Bot je Seltenheit (gleiche Reihenfolge wie RARITY)
+local BOT_KEYS = { "bot_toaster", "bot_wecker", "bot_katze", "bot_feuerwehr", "bot_drache", "bot_samurai", "bot_satellit", "bot_prototyp" }
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -271,6 +292,23 @@ local function sprite(parent, key, o)
 		Name = o.name or "Art",
 		BackgroundTransparency = 1,
 		Image = ATLAS_ID,
+		ImageRectOffset = Vector2.new(r[1], r[2]),
+		ImageRectSize = Vector2.new(r[3], r[4]),
+		Size = o.sz or UDim2.fromScale(1, 1),
+		Position = o.pos or UDim2.new(),
+		AnchorPoint = o.anchor or Vector2.zero,
+		ZIndex = o.z or 1,
+	}, parent)
+end
+
+-- Bot-Bild aus dem zweiten Atlas
+local function botSprite(parent, key, o)
+	o = o or {}
+	local r = BSPR[key]
+	return make("ImageLabel", {
+		Name = o.name or "Bot",
+		BackgroundTransparency = 1,
+		Image = BOT_ATLAS_ID,
 		ImageRectOffset = Vector2.new(r[1], r[2]),
 		ImageRectSize = Vector2.new(r[3], r[4]),
 		Size = o.sz or UDim2.fromScale(1, 1),
@@ -1146,7 +1184,9 @@ local function buildRows(key, rows)
 			gloss(card, 12, 0.45)
 		end
 		local ic = make("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 12), Size = UDim2.fromOffset(64, 64), ZIndex = 3 }, card)
-		if r.dot then
+		if r.bot and useBots and BSPR[r.bot] then
+			botSprite(ic, r.bot, { sz = UDim2.fromOffset(72, 72), pos = UDim2.fromOffset(-4, -4), z = 3 })
+		elseif r.dot then
 			ic.BackgroundTransparency = 0
 			ic.BackgroundColor3 = r.dot
 			round(ic, 999)
@@ -1216,7 +1256,7 @@ do
 		{ key = "index", title = "Index", emoji = "📖", pal = P.blue, cols = 2, rows = (function()
 			local out = {}
 			for i, r in ipairs(RARITY) do
-				out[i] = { id = r.name, dot = r.color, title = r.name, sub = string.format("%d / 9 Bots", math.max(0, 9 - i)), progress = math.max(0, 9 - i) / 9, barColor = r.color, card = "dark4" }
+				out[i] = { id = r.name, dot = r.color, bot = BOT_KEYS[i], title = r.name, sub = string.format("%d / 9 Bots", math.max(0, 9 - i)), progress = math.max(0, 9 - i) / 9, barColor = r.color, card = "dark4" }
 			end
 			return out
 		end)() },
@@ -1284,7 +1324,7 @@ end
 -- =====================================================================
 --  BANNER + DROP-FEED
 -- =====================================================================
-local banner, bIcon, bGlyph, bName, bText
+local banner, bIcon, bGlyph, bName, bText, bBot
 do
 	banner = make("CanvasGroup", {
 		Name = "Banner", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -236), Size = UDim2.fromOffset(620, 100),
@@ -1297,6 +1337,12 @@ do
 	round(bIcon, 999)
 	outline(bIcon, 4)
 	bGlyph = glyph(bIcon, "🤖", 40)
+	if useBots then
+		bBot = make("ImageLabel", {
+			Name = "Bot", BackgroundTransparency = 1, Image = BOT_ATLAS_ID, Visible = false, ZIndex = 4,
+			AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(1.25, 1.25),
+		}, bIcon)
+	end
 	bName = text(banner, "", 32, { ax = AX.Left, sz = UDim2.new(1, -110, 0, 38), pos = UDim2.fromOffset(100, 10) })
 	bText = text(banner, "", 26, { ax = AX.Left, sz = UDim2.new(1, -110, 0, 40), pos = UDim2.fromOffset(100, 48) })
 end
@@ -1304,6 +1350,15 @@ end
 local bannerQueue, bannerBusy = {}, false
 local function playBanner(cfg)
 	bGlyph.Text = cfg.emoji or "⭐"
+	if bBot then
+		local rct = cfg.bot and BSPR[cfg.bot]
+		bBot.Visible = rct ~= nil
+		bGlyph.Visible = rct == nil
+		if rct then
+			bBot.ImageRectOffset = Vector2.new(rct[1], rct[2])
+			bBot.ImageRectSize = Vector2.new(rct[3], rct[4])
+		end
+	end
 	local col = cfg.color or P.pink[1]
 	bIcon.BackgroundColor3 = col
 	bName.Text = cfg.name or ""
@@ -1512,6 +1567,12 @@ function UI.feed(cfg)
 	task.delay(cfg.time or 7, remove)
 end
 
+UI.botSprite = function(parent, key, o)
+	if useBots and BSPR[key] then
+		return botSprite(parent, key, o)
+	end
+	return nil
+end
 shared.DropABotUI = UI
 print("[DropABotUI] UI gebaut, Elemente:", #gui:GetDescendants())
 
@@ -1577,7 +1638,7 @@ if DEMO then
 		end
 	end)
 	task.delay(1.5, function()
-		UI.banner({ emoji = "🤖", name = player.DisplayName, text = "hat einen Samurai-Mech gebaut!", color = RARITY[6].color })
+		UI.banner({ emoji = "🤖", bot = "bot_samurai", name = player.DisplayName, text = "hat einen Samurai-Mech gebaut!", color = RARITY[6].color })
 	end)
 	task.delay(3, function()
 		UI.feed({ player = "Nerd", rarity = "Kosmisch", bot = "Prototyp Null", oneIn = 100000 })

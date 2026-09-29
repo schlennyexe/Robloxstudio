@@ -65,7 +65,8 @@ Danach `DEMO = false` setzen.
 ## Glänzende Knöpfe (Bild-Atlas)
 
 Alle Knöpfe, Karten und Symbole liegen als **eine** Bilddatei vor: `assets/ui/atlas.png` (1024 x 1024).
-Ohne dieses Bild zeichnet das Skript die Knöpfe selbst (schlichter). Mit Bild sehen sie aus wie Spiel-Grafik.
+Ohne dieses Bild zeichnet das Skript die Knöpfe selbst (schlichter). Mit Bild sehen sie aus wie Spiel-Grafik:
+freistehende 3D-Icons ohne Platte, Beschriftung mit dicker Kontur darüber.
 
 1. Studio: **Ansicht › Asset-Manager**, Bereich **Bilder** › **Massen-Import** › `atlas.png` wählen.
 2. Nach dem Import Rechtsklick auf das Bild › **Asset-ID kopieren**.
@@ -75,6 +76,13 @@ Ohne dieses Bild zeichnet das Skript die Knöpfe selbst (schlichter). Mit Bild s
 Die Bilder werden von `tools/make_ui_atlas.py` erzeugt: Platten als Vektorgrafik, Icons als 3D-Modelle (three.js, `tools/render3d`, Kontur in `tools/icons3d.py`). Einmalig `cd tools/render3d && npm install`. Farben, Icons und
 Größen lassen sich dort ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
 Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
+
+### Bot-Bilder (optional)
+
+`assets/ui/atlas_bots.png` enthält acht 3D-Bots (einer pro Seltenheit: Toaster, Wecker, Katze, Feuerwehr, Drache,
+Samurai, Satellit, Prototyp). Genauso hochladen und oben `local BOT_ATLAS_ID = "..."` eintragen.
+Sie erscheinen im Index und im Banner (`UI.banner({ bot = "bot_samurai", ... })`). Weitere Bots:
+Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.
 
 ## Animationen
 

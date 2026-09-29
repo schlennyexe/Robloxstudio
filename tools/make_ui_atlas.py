@@ -278,6 +278,11 @@ ICONS3D = {
     "potion_y": (320, 448, 128, "#5a3200"),
     "potion_p": (448, 448, 128, "#3a1060"),
 }
+# --- Bots (zweite Bilddatei atlas_bots.png), Konturfarbe = dunkle Seltenheitsfarbe
+BOTS = {
+    "bot_toaster": "#2a3040", "bot_wecker": "#0d4a2a", "bot_katze": "#0c3a5c", "bot_feuerwehr": "#2a1060",
+    "bot_drache": "#5a3200", "bot_samurai": "#5a0a18", "bot_satellit": "#5a4a10", "bot_prototyp": "#4a0a5a",
+}
 # --- SVG-Platten und Symbole
 tile("close", 448, 224, "red", ico_close)
 tile("plus", 672, 224, "gold", ico_plus)
@@ -317,6 +322,17 @@ def main():
         for n, (x, y, sz, _) in ICONS3D.items():
             f.write(f'\t{n} = {{ {x}, {y}, {sz}, {sz} }},\n')
         f.write("}\n")
+    # --- zweite Bilddatei: Bots (5 pro Reihe, 192 px)
+    ims = icons3d.render({n: c for n, c in BOTS.items()}, 256, fill=0.87)
+    bots = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    with open(os.path.join(OUT, "atlas_bots_rects.lua"), "w", encoding="utf8") as f:
+        f.write("local BSPR = {\n")
+        for i, n in enumerate(BOTS):
+            x, y = (i % 5) * 192, (i // 5) * 192
+            bots.alpha_composite(ims[n].resize((192, 192), Image.LANCZOS), (x, y))
+            f.write(f"\t{n} = {{ {x}, {y}, 192, 192 }},\n")
+        f.write("}\n")
+    bots.save(os.path.join(OUT, "atlas_bots.png"), optimize=True)
     for tag, bg in (("grass", (120, 200, 70, 255)),):
         prev = Image.new("RGBA", (1024, 1024), bg); prev.alpha_composite(atlas)
         prev.convert("RGB").save(os.path.join(OUT, f"atlas_preview_{tag}.png"))
