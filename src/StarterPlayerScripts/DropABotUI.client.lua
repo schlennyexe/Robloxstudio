@@ -334,32 +334,6 @@ local function burst(target)
 	end
 end
 
--- Glanzstreifen, der alle paar Sekunden über den Knopf läuft
-local function addShine(parent, radiusScale)
-	local clip = make("Frame", {
-		Name = "Shine", BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 2,
-		Position = UDim2.fromScale(0.04, 0.03), Size = UDim2.fromScale(0.92, 0.86),
-	}, parent)
-	make("UICorner", { CornerRadius = UDim.new(radiusScale or 0.22, 0) }, clip)
-	local bar = make("Frame", {
-		Name = "Bar", BackgroundColor3 = C.white, BorderSizePixel = 0, Rotation = 20, AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(-0.4, 0.5), Size = UDim2.fromScale(0.26, 1.8), ZIndex = 2,
-	}, clip)
-	make("UIGradient", {
-		Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.35), NumberSequenceKeypoint.new(1, 1),
-		}),
-	}, bar)
-	task.spawn(function()
-		task.wait(math.random() * 3)
-		while clip.Parent do
-			bar.Position = UDim2.fromScale(-0.4, 0.5)
-			tween(bar, 0.7, { Position = UDim2.fromScale(1.4, 0.5) }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-			task.wait(3.7 + math.random() * 3)
-		end
-	end)
-end
-
 -- Regenbogen-Text (Kosmisch)
 local rainbows = {}
 local rainbowPhase = 0
@@ -415,7 +389,7 @@ end)
 -- Dicker 3D-Knopf. Mit Bild-Atlas (cfg.spr) kommt ein fertiges glänzendes Bild zum Einsatz,
 -- sonst zeichnet das Skript Schatten-Unterseite und Verlaufs-Oberseite selbst.
 -- Beim Drücken wird der Knopf gequetscht und federt zurück, beim Darüberfahren wackelt er.
--- cfg: Name, Size, Position, AnchorPoint, pal, spr, radius, depth, text, textSize, z, shine, burst, onClick
+-- cfg: Name, Size, Position, AnchorPoint, pal, spr, radius, depth, text, textSize, z, burst, onClick
 local function chunky(parent, cfg)
 	local depth = cfg.depth or 5
 	local r = cfg.radius or 14
@@ -441,9 +415,6 @@ local function chunky(parent, cfg)
 		face = make("TextButton", {
 			Name = "Face", AutoButtonColor = false, Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 3,
 		}, anim)
-		if cfg.shine then
-			addShine(anim, type(cfg.shine) == "number" and cfg.shine or 0.22)
-		end
 	else
 		base = make("Frame", {
 			Name = "Base",
@@ -727,7 +698,7 @@ local function tile(parent, cfg)
 	local tsize = big and 100 or 84
 	local _, face = chunky(holder, {
 		Name = "Btn", Size = UDim2.fromOffset(tsize, tsize), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
-		pal = cfg.pal, radius = 16, depth = 5, spr = cfg.key, shine = big, burst = true,
+		pal = cfg.pal, radius = 16, depth = 5, spr = cfg.key, burst = true,
 		onClick = function()
 			if UI.onOpen then
 				UI.onOpen(cfg.key)
@@ -830,7 +801,7 @@ local dropFill, dropHint, autoRecolor
 do
 	local _, face = chunky(root, {
 		Name = "Drop", Size = UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24),
-		pal = P.gold, radius = 26, depth = 9, spr = "drop", shine = 0.34, burst = true,
+		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
 		onClick = function()
 			if UI.onDrop then
 				UI.onDrop()

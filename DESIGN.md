@@ -81,7 +81,6 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 - Darüberfahren: Knopf wächst leicht und wackelt kurz.
 - Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
 - Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch.
-- Ruhe: alle paar Sekunden läuft ein Glanzstreifen über Kacheln und DROP.
 - Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
 
 ## Noch offen
