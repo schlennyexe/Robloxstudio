@@ -38,10 +38,10 @@ Legendär `#FBBF24`, Mythisch `#FB4B6E`, Göttlich `#FFF1A8`, Kosmisch Regenboge
 
 ## Layout (Basis 900 px Höhe, skaliert automatisch)
 
-- **Oben Mitte:** Schrauben (Schraubenmutter-Symbol) und Zahnräder (erscheint erst, wenn > 0)
-- **Links Mitte:** Upgrades, Aufgaben, Forschung. **Rechts Mitte:** Shop, Rebirth, Index
-- **Unten links:** Glück-Pille mit gelbem Plus, darüber aktive Tränke
-- **Unten Mitte:** großer DROP-Knopf mit Fortschrittsbalken, links davon AUTO; Banner erscheint darüber
+- **Oben Mitte:** Schrauben (Haufen aus drei Goldschrauben, darunter grün die Rate pro Sekunde) und die lila Schraube (zweite Währung, erscheint erst, wenn > 0)
+- **Links Mitte:** Upgrades (grüne Kreispfeile), Aufgaben (Klemmbrett), Forschung (Kolben). **Rechts Mitte:** Shop (roter Korb), Index (blaues Buch), Rebirth (aufspringende Kapsel), Teleport (Joystick)
+- **Unten links:** Klee mit "+12%" und kleinem Plus, daneben aktive Boosts (Tränke, Eiswürfel `kind = "eis"`) mit Restzeit darunter
+- **Unten Mitte:** roter Druckknopf DROP auf grauer Platte (Beschriftung "DROP" darunter, Fortschrittsbalken ganz unten), links der Rucksack (öffnet das Bots-Fenster), rechts der AUTO-Schalter mit "AUTO / AUS" darunter; Banner erscheint darüber
 - **Oben links unter der Roblox-Leiste:** Drop-Feed ("1 in 100K")
 
 ## Anbindung ans Spiel (`shared.DropABotUI`)
@@ -76,7 +76,7 @@ freistehende 3D-Icons ohne Platte, Beschriftung mit dicker Kontur darüber.
 
 Die Bilder werden von `tools/make_ui_atlas.py` erzeugt: Platten als Vektorgrafik, Icons als 3D-Modelle (three.js, `tools/render3d`, Kontur in `tools/icons3d.py`). Einmalig `cd tools/render3d && npm install`. Farben, Icons und
 Größen lassen sich dort ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
-Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
+Die Plätze im Bild werden automatisch gesucht. Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
 
 ### Bot-Bilder (optional)
 
@@ -101,8 +101,8 @@ ihre Größe (`k()` rechnet sie um). Alles andere wächst mit.
 - Darüberfahren: Knopf wächst leicht und wackelt kurz.
 - Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
 - Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`).
-- AUTO: kleiner 3D-Kippschalter. Aus = grau, Knopf links, "AUS". An = grün, Knopf rechts, "AN".
-- DROP: großer 3D-Würfel (Kern) mit Pfeil nach unten. Andere Entwürfe: Trichter mit Kern (`drop_c`), Kristall (`drop_d`), Arcade-Knopf (`drop_arcade`) in `tools/render3d/icons.html`.
+- AUTO: kleiner 3D-Kippschalter. Aus = dunkel, weißer Knopf links, Beschriftung "AUTO / AUS". An = grün, Knopf rechts, "AUTO / AN".
+- DROP: roter Druckknopf auf grauer Metallplatte (Vorbild: dein Referenzbild). Ältere Entwürfe bleiben in `tools/render3d/icons.html`: Würfel (`drop_cube`), Trichter (`drop_c`), Kristall (`drop_d`), Arcade (`drop_arcade`).
 - Klick-Sound aller Knöpfe: eigene Audio-ID `139719503904449` (`SOUND_IDS.click`). Lädt sie nicht, nimmt das Skript automatisch den weichen Ersatzton und schreibt eine Zeile in den Output.
 - Geräusche: leise und sanft. Eigene Töne: `assets/audio/click.wav` und `buy.wav` in Studio hochladen (Asset-Manager › Audio) und die IDs in `SOUND_IDS` eintragen. Ohne eigene IDs nimmt das Skript weiche Töne, die in Roblox eingebaut sind, und wählt nur, was wirklich lädt.
 

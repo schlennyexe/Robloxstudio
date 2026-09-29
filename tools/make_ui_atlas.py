@@ -257,28 +257,33 @@ def tile(name, x, y, colour, icon, size=TILE):
     SPRITES.append((name, x, y, size, size, svg_wrap(size, size, 256, 256, tile_body(MID[colour], icon(MID[colour])))))
 def plate(name, x, y, w, h, colour):
     SPRITES.append((name, x, y, w, h, svg_wrap(w, h, w, h, plate_body(w, h, MID[colour]))))
-def small(name, x, y, fn):
-    SPRITES.append((name, x, y, 128, 128, svg_wrap(128, 128, 128, 128, fn())))
+def small(name, x, y, fn, size=96):
+    SPRITES.append((name, x, y, size, size, svg_wrap(size, size, 128, 128, fn())))
 
-# --- 3D-Icons (ohne Platte), siehe tools/icons3d.py. name: (x, y, Größe, Konturfarbe)
+# --- 3D-Icons (ohne Platte), siehe tools/icons3d.py. name: (Größe, Konturfarbe, Art)
+# Art: "tile" = unten bleibt Platz für die Beschriftung, "icon" = frei stehend, "crop" = eng zugeschnitten (Größe = Breite)
+# Die Position im Atlas wird automatisch gesucht (pack), die Ausschnitte landen in atlas_rects.lua.
 ICONS3D = {
-    "upgrades": (0, 0, 224, "#0d3a14"),
-    "aufgaben": (224, 0, 224, "#0c2a5c"),
-    "forschung": (448, 0, 224, "#2a1060"),
-    "shop": (672, 0, 224, "#5a0a18"),
-    "rebirth": (0, 224, 224, "#5a0f34"),
-    "index": (224, 224, 224, "#0c2a66"),
-    "teleport": (704, 224, 192, "#0c2a66"),
-    "nut": (896, 0, 128, "#5a3200"),
-    "gear": (896, 128, 128, "#2a1060"),
-    "clover": (896, 256, 128, "#0d3a14"),
-    "lock": (576, 448, 128, "#4a2c00"),
-    "star": (832, 448, 128, "#5a3200"),
-    "drop": (0, 448, 192, "#04304a"),
-    "potion_g": (192, 448, 128, "#0d3a14"),
-    "potion_y": (320, 448, 128, "#5a3200"),
-    "potion_p": (448, 448, 128, "#3a1060"),
-    "hand": (448, 352, 96, "#20242f"),
+    "upgrades": (192, "#0a3a12", "tile"),
+    "aufgaben": (192, "#2a1408", "tile"),
+    "forschung": (192, "#0e2a5a", "tile"),
+    "shop": (192, "#4a0620", "tile"),
+    "index": (192, "#0a1c5a", "tile"),
+    "rebirth": (192, "#3a0a1a", "tile"),
+    "teleport": (192, "#0c1e5a", "tile"),
+    "backpack": (192, "#4a0e0a", "tile"),
+    "drop": (208, "#141a48", "crop"),
+    "screws": (128, "#5a3200", "icon"),
+    "nut": (80, "#5a3200", "icon"),
+    "gear": (96, "#2a0a5a", "icon"),
+    "clover": (112, "#0d3a14", "icon"),
+    "ice": (96, "#1c3a66", "icon"),
+    "potion_g": (96, "#0e3a44", "icon"),
+    "potion_y": (96, "#3a2a08", "icon"),
+    "potion_p": (96, "#2a1060", "icon"),
+    "lock": (96, "#4a2c00", "icon"),
+    "star": (96, "#5a3200", "icon"),
+    "hand": (96, "#20242f", "icon"),
 }
 # --- Bots (zweite Bilddatei atlas_bots.png), Konturfarbe = dunkle Seltenheitsfarbe
 BOTS = {
@@ -293,18 +298,18 @@ BOTS = {
     "bot_astronaut": "#5a4a10", "bot_sonne": "#5a4a10",
     "bot_kikern": "#4a0a5a", "bot_zeitwaechter": "#4a0a5a",
 }
-# --- AUTO-Schalter (aus / an), 2:1
-TOGGLES = {"toggle_off": (210, 576, 108, 64), "toggle_on": (330, 576, 108, 64)}
+# --- AUTO-Schalter (aus / an): Breite, Konturfarbe; die Höhe ergibt sich aus dem Zuschnitt
+TOGGLES = {"toggle_off": (112, "#141824"), "toggle_on": (112, "#0a3a18")}
 # --- Upgrade-Symbole (ebenfalls in atlas_bots.png)
 UPS = {
     "up_kerne": "#08425a", "up_tempo": "#7a3a00", "up_glueck": "#0d3a14", "up_reihen": "#1a2a6a",
     "up_plaetze": "#6a3200", "up_planGlueck": "#0c2a5c", "up_werkzeug": "#2a3040", "up_scanner": "#5a3200",
     "up_schnellwurf": "#5a0a18", "up_sockel": "#232a55", "up_splitter": "#08425a", "up_goldpin": "#5a3200",
 }
-# --- SVG-Platten und Symbole
-tile("close", 448, 224, "red", ico_close, 128)
-tile("plus", 576, 224, "gold", ico_plus, 128)
-small("glint", 704, 448, small_glint)
+# --- SVG-Platten und Symbole. Kleine Knöpfe/Glanz bekommen ihren Platz vom Packer (x = y = None), Platten liegen fest ab y = 640.
+tile("close", None, None, "red", ico_close, 96)
+tile("plus", None, None, "gold", ico_plus, 96)
+small("glint", None, None, small_glint)
 plate("gold2", 0, 640, 256, 128, "gold")
 plate("gray2", 256, 640, 256, 128, "gray")
 plate("green2", 512, 640, 256, 128, "green")
@@ -314,8 +319,54 @@ plate("dark4", 512, 768, 512, 128, "dark")
 plate("gray4", 0, 896, 512, 128, "gray")
 plate("gold4", 512, 896, 512, 128, "gold")
 
+PACK_H = 640    # oberhalb davon liegen Icons, darunter die Platten
+
+def pack(items, fixed=()):
+    """Einfacher Platzsucher: items = [(name, w, h)], fixed = schon belegte (x, y, w, h). Gibt {name: (x, y)} zurück."""
+    import numpy as np
+    G = 8
+    occ = np.zeros((PACK_H // G, 1024 // G), dtype=bool)
+    def mark(x, y, w, h):
+        occ[y // G:(y + h + G - 1) // G, x // G:(x + w + G - 1) // G] = True
+    for r in fixed:
+        mark(*r)
+    pos = {}
+    for name, w, h in sorted(items, key=lambda t: (-t[2], -t[1])):
+        gw, gh = (w + G - 1) // G, (h + G - 1) // G
+        for gy in range(0, occ.shape[0] - gh + 1):
+            hit = False
+            for gx in range(0, occ.shape[1] - gw + 1):
+                if not occ[gy:gy + gh, gx:gx + gw].any():
+                    pos[name] = (gx * G, gy * G); mark(gx * G, gy * G, w, h); hit = True
+                    break
+            if hit:
+                break
+        else:
+            raise SystemExit(f"Kein Platz im Atlas für {name} ({w}x{h}) - Größen verkleinern")
+    return pos
+
 def main():
     atlas = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    sys.path.insert(0, os.path.dirname(__file__))
+    import icons3d
+    # 1) 3D-Icons rendern (Größen stehen danach fest)
+    spec = {}
+    for n, (sz, col, kind) in ICONS3D.items():
+        spec[n] = (col, 0.75, 0.17) if kind == "tile" else ((col, 0.86, 0, "crop") if kind == "crop" else col)
+    for n, (w, col) in TOGGLES.items():
+        spec[n] = (col, 0.86, 0, "crop")
+    ims = icons3d.render(spec, 256, fill=0.87)
+    sizes = {}
+    for n, (sz, col, kind) in ICONS3D.items():
+        sizes[n] = (sz, round(sz * ims[n].height / ims[n].width)) if kind == "crop" else (sz, sz)
+    for n, (w, col) in TOGGLES.items():
+        sizes[n] = (w, round(w * ims[n].height / ims[n].width))
+    # 2) Platz suchen: kleine SVG-Symbole (x = None) und alle 3D-Icons
+    fixed = [(x, y, w, h) for name, x, y, w, h, _ in SPRITES if x is not None]
+    items = [(name, w, h) for name, x, y, w, h, _ in SPRITES if x is None] + [(n, *sizes[n]) for n in sizes]
+    pos = pack(items, fixed)
+    SPRITES[:] = [(n, *(pos[n] if x is None else (x, y)), w, h, svg) for n, x, y, w, h, svg in SPRITES]
+    # 3) SVG-Platten und Symbole
     with sync_playwright() as p:
         br = p.chromium.launch(executable_path=CHROME, args=["--no-sandbox"])
         ctx = br.new_context(device_scale_factor=3)
@@ -327,25 +378,16 @@ def main():
             im = Image.open(io.BytesIO(png)).convert("RGBA").resize((w, h), Image.LANCZOS)
             atlas.alpha_composite(im, (x, y))
         br.close()
-    sys.path.insert(0, os.path.dirname(__file__))
-    import icons3d
-    LABELED = {"upgrades", "aufgaben", "forschung", "shop", "rebirth", "index", "teleport", "drop"}   # unten bleibt Platz für die Beschriftung
-    ims = icons3d.render({n: (((v[3], 0.84, 0.1) if n == "drop" else (v[3], 0.75, 0.17)) if n in LABELED else v[3]) for n, v in ICONS3D.items()}, 256, fill=0.87)
-    for n, (x, y, sz, _) in ICONS3D.items():
-        atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
-    # Schalter: mittleres Band (2:1) ausschneiden
-    tims = icons3d.render({"toggle_off": ("#20242f", 0.94, 0), "toggle_on": ("#0a3a18", 0.94, 0)}, 256)
-    for n, (x, y, w, h) in TOGGLES.items():
-        atlas.alpha_composite(tims[n].crop((0, 52, 256, 204)).resize((w, h), Image.LANCZOS), (x, y))
+    # 4) 3D-Icons einsetzen
+    for n, (w, h) in sizes.items():
+        atlas.alpha_composite(ims[n].resize((w, h), Image.LANCZOS), pos[n])
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
     with open(os.path.join(OUT, "atlas_rects.lua"), "w", encoding="utf8") as f:
         f.write("local SPR = {\n")
         for name, x, y, w, h, _ in SPRITES:
             f.write(f'\t{name} = {{ {x}, {y}, {w}, {h} }},\n')
-        for n, (x, y, sz, _) in ICONS3D.items():
-            f.write(f'\t{n} = {{ {x}, {y}, {sz}, {sz} }},\n')
-        for n, (x, y, w, h) in TOGGLES.items():
-            f.write(f'\t{n} = {{ {x}, {y}, {w}, {h} }},\n')
+        for n, (w, h) in sizes.items():
+            f.write(f'\t{n} = {{ {pos[n][0]}, {pos[n][1]}, {w}, {h} }},\n')
         f.write("}\n")
     # --- zweite Bilddatei: Bots und Upgrade-Symbole (6 pro Reihe, 160 px)
     ims = icons3d.render({n: c for n, c in {**BOTS, **UPS}.items()}, 256, fill=0.87)

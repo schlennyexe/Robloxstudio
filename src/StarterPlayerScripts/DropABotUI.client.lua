@@ -43,9 +43,9 @@ local SOUND_VOLUME = { click = 0.22, buy = 0.3, hover = 0.12 }
 
 -- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
 local SPR = {
-	close = { 448, 224, 128, 128 },
-	plus = { 576, 224, 128, 128 },
-	glint = { 704, 448, 128, 128 },
+	close = { 912, 304, 96, 96 },
+	plus = { 784, 320, 96, 96 },
+	glint = { 576, 352, 96, 96 },
 	gold2 = { 0, 640, 256, 128 },
 	gray2 = { 256, 640, 256, 128 },
 	green2 = { 512, 640, 256, 128 },
@@ -54,25 +54,28 @@ local SPR = {
 	dark4 = { 512, 768, 512, 128 },
 	gray4 = { 0, 896, 512, 128 },
 	gold4 = { 512, 896, 512, 128 },
-	upgrades = { 0, 0, 224, 224 },
-	aufgaben = { 224, 0, 224, 224 },
-	forschung = { 448, 0, 224, 224 },
-	shop = { 672, 0, 224, 224 },
-	rebirth = { 0, 224, 224, 224 },
-	index = { 224, 224, 224, 224 },
-	teleport = { 704, 224, 192, 192 },
-	nut = { 896, 0, 128, 128 },
-	gear = { 896, 128, 128, 128 },
-	clover = { 896, 256, 128, 128 },
-	lock = { 576, 448, 128, 128 },
-	star = { 832, 448, 128, 128 },
-	drop = { 0, 448, 192, 192 },
-	potion_g = { 192, 448, 128, 128 },
-	potion_y = { 320, 448, 128, 128 },
-	potion_p = { 448, 448, 128, 128 },
-	hand = { 448, 352, 96, 96 },
-	toggle_off = { 210, 576, 108, 64 },
-	toggle_on = { 330, 576, 108, 64 },
+	upgrades = { 0, 0, 192, 192 },
+	aufgaben = { 192, 0, 192, 192 },
+	forschung = { 384, 0, 192, 192 },
+	shop = { 576, 0, 192, 192 },
+	index = { 768, 0, 192, 192 },
+	rebirth = { 0, 192, 192, 192 },
+	teleport = { 192, 192, 192, 192 },
+	backpack = { 384, 192, 192, 192 },
+	drop = { 576, 192, 208, 159 },
+	screws = { 784, 192, 128, 128 },
+	nut = { 768, 416, 80, 80 },
+	gear = { 672, 352, 96, 96 },
+	clover = { 912, 192, 112, 112 },
+	ice = { 0, 384, 96, 96 },
+	potion_g = { 96, 384, 96, 96 },
+	potion_y = { 192, 384, 96, 96 },
+	potion_p = { 288, 384, 96, 96 },
+	lock = { 384, 384, 96, 96 },
+	star = { 480, 384, 96, 96 },
+	hand = { 880, 400, 96, 96 },
+	toggle_off = { 0, 480, 112, 62 },
+	toggle_on = { 576, 448, 112, 64 },
 }
 
 -- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
@@ -663,7 +666,7 @@ end
 -- Schraubenmutter (Sechseck aus drei gedrehten Rechtecken), Währungs-Symbol
 local function hexNut(parent, size, fill, edge)
 	if useAtlas then
-		return sprite(parent, "nut", {
+		return sprite(parent, size >= 48 and "screws" or "nut", {
 			name = "Nut", sz = UDim2.fromOffset(size, size), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3,
 		})
 	end
@@ -797,33 +800,33 @@ local function currencyPlate(cfg)
 	end
 	local iconBox = make("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(useAtlas and 2 or 6, useAtlas and 0 or 3),
-		Size = UDim2.fromOffset(useAtlas and 58 or 48, useAtlas and 58 or 48),
+		Position = UDim2.fromOffset(useAtlas and 0 or 6, useAtlas and -6 or 3),
+		Size = UDim2.fromOffset(useAtlas and 72 or 48, useAtlas and 72 or 48),
 		ZIndex = 3,
 	}, inner)
 	cfg.icon(iconBox)
 	local value = text(inner, "0", useAtlas and 38 or 30, {
 		stroke = useAtlas and 4 or 3,
-		name = "Value", ax = AX.Left, sz = UDim2.new(1, -70, 0, useAtlas and 40 or 32), pos = UDim2.fromOffset(useAtlas and 64 or 60, 0),
+		name = "Value", ax = AX.Left, sz = UDim2.new(1, -70, 0, useAtlas and 40 or 32), pos = UDim2.fromOffset(useAtlas and 76 or 60, 0),
 	})
 	fit(value, useAtlas and 38 or 30)
-	local sub = text(inner, "", 15, {
-		name = "Sub", ax = AX.Left, color = cfg.subColor, stroke = 2, sz = UDim2.new(1, -70, 0, 18), pos = UDim2.fromOffset(useAtlas and 66 or 60, useAtlas and 38 or 32),
+	local sub = text(inner, "", useAtlas and 20 or 15, {
+		name = "Sub", ax = AX.Left, color = cfg.subColor, stroke = useAtlas and 3 or 2, sz = UDim2.new(1, -70, 0, useAtlas and 22 or 18), pos = UDim2.fromOffset(useAtlas and 78 or 60, useAtlas and 38 or 32),
 	})
 	return { frame = rim, counter = newCounter(value), sub = sub, bump = bump }
 end
 
 local moneyPlate = currencyPlate({
-	name = "Schrauben", order = 1, width = 260, rim = P.gold[2], subColor = Color3.fromRGB(255, 230, 150),
+	name = "Schrauben", order = 1, width = 276, rim = P.gold[2], subColor = Color3.fromRGB(176, 238, 156),
 	icon = function(p)
-		hexNut(p, 56, NUT_FILL, NUT_EDGE)
+		hexNut(p, 68, NUT_FILL, NUT_EDGE)
 	end,
 })
 local gearPlate = currencyPlate({
-	name = "Zahnraeder", order = 2, width = 170, rim = P.purple[2], subColor = Color3.fromRGB(226, 208, 255),
+	name = "Zahnraeder", order = 2, width = 176, rim = P.purple[2], subColor = Color3.fromRGB(226, 208, 255),
 	icon = function(p)
 		if useAtlas then
-			sprite(p, "gear", { sz = UDim2.fromOffset(54, 54), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3 })
+			sprite(p, "gear", { sz = UDim2.fromOffset(62, 62), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3 })
 			return
 		end
 		local disc = make("Frame", {
@@ -917,8 +920,8 @@ do
 	tile(left, { key = "aufgaben", label = "Aufgaben", emoji = "📋", pal = P.blue, order = 2 })
 	tile(left, { key = "forschung", label = "Forschung", emoji = "🔬", pal = P.purple, order = 3 })
 	tile(right, { key = "shop", label = "Shop", emoji = "🛒", pal = P.red, order = 1 })
-	tile(right, { key = "rebirth", label = "Rebirth", emoji = "🔄", pal = P.pink, order = 2 })
-	tile(right, { key = "index", label = "Index", emoji = "📖", pal = P.blue, order = 3 })
+	tile(right, { key = "index", label = "Index", emoji = "📖", pal = P.blue, order = 2 })
+	tile(right, { key = "rebirth", label = "Rebirth", emoji = "🔄", pal = P.pink, order = 3 })
 	tile(right, { key = "teleport", label = "Teleport", emoji = "🌀", pal = P.blue, order = 4 })
 end
 
@@ -985,8 +988,8 @@ make("UIListLayout", {
 local dropFill, dropHint, autoRecolor, dropFace
 do
 	local _, face = chunky(root, {
-		Name = "Drop", Size = useAtlas and UDim2.fromOffset(k(184), k(184)) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
-		Position = useAtlas and UDim2.new(0.5, 0, 1, -k(40)) or UDim2.new(0.5, 0, 1, -24),
+		Name = "Drop", Size = useAtlas and UDim2.fromOffset(k(190), k(145)) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
+		Position = useAtlas and UDim2.new(0.5, 0, 1, -k(84)) or UDim2.new(0.5, 0, 1, -24),
 		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
 		onClick = function()
 			if UI.onDrop then
@@ -996,10 +999,11 @@ do
 	})
 	dropFace = face
 	if useAtlas then
-		text(face, "DROP", k(46), { sz = UDim2.new(1.3, 0, 0, k(52)), pos = UDim2.new(0.5, 0, 0.86, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
+		-- Beschriftung unter dem Knopf (wie im Referenzbild), Fortschrittsbalken ganz unten
+		text(face, "DROP", k(46), { sz = UDim2.new(1.3, 0, 0, k(52)), pos = UDim2.new(0.5, 0, 1, k(30)), anchor = Vector2.new(0.5, 0.5), stroke = 5 })
 		local track = make("Frame", {
 			Name = "Track", BackgroundColor3 = C.ink, BackgroundTransparency = 0.25,
-			AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -k(18)), Size = UDim2.fromOffset(k(150), k(14)),
+			AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -k(10)), Size = UDim2.fromOffset(k(150), k(12)),
 		}, root)
 		round(track, 999)
 		outline(track, 2)
@@ -1022,8 +1026,8 @@ do
 	end
 
 	local _, aFace, _, recolor = chunky(root, {
-		Name = "Auto", Size = useAtlas and UDim2.fromOffset(k(84), k(50)) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(0.5, useAtlas and -(k(184) / 2 + k(14)) or -170, 1, useAtlas and -k(46) or -30),
+		Name = "Auto", Size = useAtlas and UDim2.fromOffset(k(86), k(48)) or UDim2.fromOffset(120, 64), AnchorPoint = useAtlas and Vector2.new(0, 1) or Vector2.new(1, 1),
+		Position = useAtlas and UDim2.new(0.5, k(190) / 2 + k(20), 1, -k(80)) or UDim2.new(0.5, -170, 1, -30),
 		pal = P.gray, radius = 16, depth = 6, spr = useAtlas and "toggle_off" or "gray2", text = (not useAtlas) and "AUTO" or nil, textSize = 26,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
@@ -1034,12 +1038,10 @@ do
 	})
 	autoRecolor = recolor
 	if useAtlas then
-		-- 3D-Schalter: Aus = grau mit Knopf links, An = grün mit Knopf rechts
-		text(aFace, "AUTO", k(17), { sz = UDim2.new(1, 0, 0, k(20)), pos = UDim2.new(0.5, 0, 0, -k(12)), anchor = Vector2.new(0.5, 0.5), stroke = 3 })
-		local aState = text(aFace, "AUS", k(13), { sz = UDim2.new(0.5, 0, 0.6, 0), pos = UDim2.new(0.74, 0, 0.5, 0), anchor = Vector2.new(0.5, 0.5), stroke = 2 })
+		-- 3D-Schalter: Aus = dunkel mit weißem Knopf links, An = grün mit Knopf rechts. Beschriftung darunter.
+		local aState = text(aFace, "AUTO / AUS", k(17), { sz = UDim2.new(1.5, 0, 0, k(22)), pos = UDim2.new(0.5, 0, 1, k(24)), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
 		UI._autoSet = function(on)
-			aState.Text = on and "AN" or "AUS"
-			aState.Position = on and UDim2.new(0.26, 0, 0.5, 0) or UDim2.new(0.74, 0, 0.5, 0)
+			aState.Text = on and "AUTO / AN" or "AUTO / AUS"
 		end
 	else
 		local aState = text(aFace, "AUS", 14, { sz = UDim2.new(1, 0, 0, 16), pos = UDim2.new(0, 0, 1, -22), stroke = 2, name = "State" })
@@ -1048,9 +1050,29 @@ do
 		end
 	end
 
+	-- Rucksack links neben DROP (mit Bild-Atlas), ohne Bild rechts daneben
+	local _, bpFace = chunky(root, {
+		Name = "Backpack", Size = useAtlas and UDim2.fromOffset(k(96), k(96)) or UDim2.fromOffset(96, 64),
+		AnchorPoint = useAtlas and Vector2.new(1, 1) or Vector2.new(0, 1),
+		Position = useAtlas and UDim2.new(0.5, -(k(190) / 2 + k(20)), 1, -k(69)) or UDim2.new(0.5, 170, 1, -30),
+		pal = P.red, radius = 16, depth = 6, spr = "backpack", text = (not useAtlas) and "Rucksack" or nil, textSize = 18, burst = true,
+		onClick = function()
+			if UI.onOpen then
+				UI.onOpen("rucksack")
+			end
+			UI.toggleWindow("bots")
+		end,
+	})
+	if useAtlas then
+		local lbl = text(bpFace, "Rucksack", k(20), {
+			name = "Label", sz = UDim2.new(1.4, 0, 0, k(24)), pos = UDim2.new(0.5, 0, 0.87, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4,
+		})
+		fit(lbl, k(20))
+	end
+
 	if useAtlas and SPR.hand then
 		dropHint = sprite(root, "hand", {
-			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -(k(40) + k(184) + 6)), z = 5,
+			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -(k(84) + k(145) + 6)), z = 5,
 		})
 	else
 		dropHint = glyph(root, "👇", 64, {
@@ -1059,7 +1081,7 @@ do
 	end
 	dropHint.Visible = false
 	TweenService:Create(dropHint, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-		Position = UDim2.new(0.5, 0, 1, useAtlas and -(k(40) + k(184) + 24) or -146),
+		Position = UDim2.new(0.5, 0, 1, useAtlas and -(k(84) + k(145) + 24) or -146),
 	}):Play()
 end
 
@@ -1650,7 +1672,7 @@ function UI.setBoosts(list)
 		local pillFrame = make("Frame", { BackgroundColor3 = C.white, Size = useAtlas and UDim2.fromOffset(64, 96) or UDim2.fromOffset(200, 34), LayoutOrder = i }, boostList)
 		if useAtlas then
 			pillFrame.BackgroundTransparency = 1
-			sprite(pillFrame, b.kind == "schrauben" and "potion_y" or (b.kind == "turbo" and "potion_p" or "potion_g"), { sz = UDim2.fromOffset(60, 60), pos = UDim2.fromOffset(2, 4), z = 3 })
+			sprite(pillFrame, b.kind == "eis" and "ice" or (b.kind == "schrauben" and "potion_y" or (b.kind == "turbo" and "potion_p" or "potion_g")), { sz = UDim2.fromOffset(60, 60), pos = UDim2.fromOffset(2, 4), z = 3 })
 			text(pillFrame, timeText, 20, { sz = UDim2.new(1.2, 0, 0, 24), pos = UDim2.new(0.5, 0, 0, 80), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
 		else
 			round(pillFrame, 17)
@@ -1826,6 +1848,7 @@ if DEMO then
 	UI.setBoosts({
 		{ name = "Glückstrank", seconds = 214, color = P.green[1], kind = "glueck" },
 		{ name = "Geld ×2", seconds = 96, color = P.gold[1], kind = "schrauben" },
+		{ name = "Eis", seconds = 204, color = Color3.fromRGB(150, 210, 255), kind = "eis" },
 	})
 	UI.showHint(true)
 

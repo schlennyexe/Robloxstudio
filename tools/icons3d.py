@@ -29,7 +29,8 @@ def outline(im, color, width):
     return under
 
 def render(names, size, fill=0.86, ol_width=None):
-    """names: {name: Konturfarbe | (Konturfarbe, fill, yShift)}. Liefert {name: RGBA-Image size x size} mit Kontur."""
+    """names: {name: Konturfarbe | (Konturfarbe, fill, yShift) | (Konturfarbe, fill, yShift, "crop")}.
+    Liefert {name: RGBA-Image size x size} mit Kontur. Bei "crop" kommt das eng zugeschnittene Bild in voller Auflösung zurück."""
     srv = _serve(); out = {}
     port = srv.server_address[1]
     with sync_playwright() as p:
@@ -40,7 +41,8 @@ def render(names, size, fill=0.86, ol_width=None):
         pg.goto(f"http://127.0.0.1:{port}/icons.html")
         pg.wait_for_function("window.__ready === true", timeout=30000)
         for name, spec in names.items():
-            col, f, shift = spec if isinstance(spec, tuple) else (spec, fill, 0)
+            col, f, shift, *rest = spec if isinstance(spec, tuple) else (spec, fill, 0)
+            crop = bool(rest and rest[0] == "crop")
             url = pg.evaluate("([n, f, y]) => window.renderIcon(n, f, y)", [name, f, shift])
             im = Image.open(io.BytesIO(base64.b64decode(url.split(",")[1]))).convert("RGBA")
             # Kontur auf hoher Auflösung, danach runterrechnen
@@ -53,8 +55,12 @@ def render(names, size, fill=0.86, ol_width=None):
             rgb = ImageEnhance.Contrast(rgb).enhance(CONTRAST)
             im = Image.merge("RGBA", (*rgb.split(), al))
             w = ol_width if ol_width is not None else OUTLINE * im.width
-            im = outline(im, col, w).resize((size, size), Image.LANCZOS)
-            out[name] = im
+            im = outline(im, col, w)
+            if crop:
+                bb = im.getbbox()
+                out[name] = im.crop((bb[0] - 2, bb[1] - 2, bb[2] + 2, bb[3] + 2))
+            else:
+                out[name] = im.resize((size, size), Image.LANCZOS)
         b.close()
     srv.shutdown()
     if errs: print("Browser-Meldungen:", errs[:5])

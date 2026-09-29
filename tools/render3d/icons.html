@@ -28,6 +28,11 @@ const ext = (shape, depth, bevel = 0.09, seg = 5) => {
   const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: seg, curveSegments: 28 });
   g.center(); return g;
 };
+// wie ext, aber ohne die Form in die Mitte zu schieben (für Teile, die zueinander passen müssen)
+const extRaw = (shape, depth, bevel = 0.09, seg = 5) => {
+  const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: seg, curveSegments: 28 });
+  g.translate(0, 0, -depth / 2); return g;
+};
 const mesh = (geo, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); return o; };
 const rbox = (w, h, d, r, m, x = 0, y = 0, z = 0) => mesh(new RoundedBoxGeometry(w, h, d, 6, r), m, x, y, z);
 const poly = pts => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => i ? s.lineTo(x, y) : s.moveTo(x, y)); s.closePath(); return s; };
@@ -35,97 +40,112 @@ const poly = pts => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => i 
 // ---------------------------------------------------------------- Modelle
 const MODELS = {};
 
+// Refresh-Pfeile: zwei dicke grüne Bogenpfeile im Kreis (Upgrades)
+const arcArrow = (a0, a1, R, w, headLen, headW) => {
+  const N = 26, pts = [], ro = R + w / 2, ri = R - w / 2;
+  const P = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
+  for (let i = 0; i <= N; i++) pts.push(P(ro, a0 + (a1 - a0) * i / N));
+  const tx = -Math.sin(a1), ty = Math.cos(a1);                       // Laufrichtung am Ende
+  const [ex, ey] = P(R, a1);
+  const nx = Math.cos(a1), ny = Math.sin(a1);                        // nach außen
+  pts.push([ex + nx * headW, ey + ny * headW], [ex + tx * headLen, ey + ty * headLen], [ex - nx * headW, ey - ny * headW]);
+  for (let i = N; i >= 0; i--) pts.push(P(ri, a0 + (a1 - a0) * i / N));
+  return poly(pts);
+};
 MODELS.upgrades = () => {
   const g = new THREE.Group();
-  const chev = poly([[-1, 0], [0, 0.82], [1, 0], [1, -0.44], [0, 0.4], [-1, -0.44]]);
-  const geo = ext(chev, 0.5, 0.11);
-  const dark = mat(0x1a8a30), top = mat(0x2bab3c);
-  const a = mesh(geo, dark, 0, -0.62, 0); const b = mesh(geo, top, 0, 0.36, 0.06);
-  g.add(a, b); g.rotation.set(0.42, -0.55, 0); return g;
+  const top = extRaw(arcArrow(0.55, 2.3, 0.86, 0.38, 0.56, 0.4), 0.3, 0.08);
+  const bot = extRaw(arcArrow(0.55 + Math.PI, 2.3 + Math.PI, 0.86, 0.38, 0.56, 0.4), 0.3, 0.08);
+  g.add(mesh(top, mat(0x23a02f)), mesh(bot, mat(0x1c8f28)));
+  g.rotation.set(0.22, -0.25, 0.1); return g;
 };
 
 MODELS.aufgaben = () => {
   const g = new THREE.Group();
-  g.add(rbox(1.66, 2.1, 0.2, 0.12, mat(0x2270d6), 0, 0, -0.14));
-  g.add(rbox(1.42, 1.86, 0.2, 0.1, mat(0xf1e2bd, { roughness: 0.55 }), 0, -0.02, 0.02));
-  g.add(rbox(0.74, 0.34, 0.3, 0.12, mat(0xf0a020), 0, 0.98, 0.06));
-  g.add(mesh(new THREE.TorusGeometry(0.12, 0.05, 10, 24), mat(0xd98a00), 0, 1.16, 0.06));
+  g.add(rbox(1.7, 2.15, 0.2, 0.12, mat(0x8a4f2e), 0, 0, -0.14));                         // Holzbrett
+  g.add(rbox(1.42, 1.82, 0.08, 0.06, mat(0xf7f0e0, { roughness: 0.55 }), 0, -0.08, 0.02));  // Papier
+  g.add(rbox(0.86, 0.36, 0.2, 0.1, mat(0x8f9ed6, { metalness: 0.25, roughness: 0.35 }), 0, 1.0, 0.08));   // Klammer
+  g.add(mesh(new THREE.TorusGeometry(0.13, 0.05, 10, 24), mat(0x6f7fbf, { metalness: 0.3 }), 0, 1.22, 0.08));
   for (let i = 0; i < 3; i++) {
-    const y = 0.5 - i * 0.55;
-    const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.56, y + 0.02, 0.2), new THREE.Vector3(-0.44, y - 0.12, 0.2), new THREE.Vector3(-0.2, y + 0.16, 0.2)]);
-    g.add(mesh(new THREE.TubeGeometry(curve, 16, 0.075, 10), mat(0x2ed15a)));
-    g.add(rbox(0.62, 0.15, 0.08, 0.05, mat(0x8aa9cf), 0.32, y, 0.16));
+    const y = 0.42 - i * 0.55;
+    if (i < 2) {
+      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.56, y + 0.02, 0.12), new THREE.Vector3(-0.44, y - 0.12, 0.12), new THREE.Vector3(-0.2, y + 0.18, 0.12)]);
+      g.add(mesh(new THREE.TubeGeometry(curve, 16, 0.085, 10), mat(0x2ed15a)));
+    } else {
+      g.add(rbox(0.3, 0.3, 0.05, 0.05, mat(0xc9d2e4), -0.4, y, 0.08));
+    }
+    g.add(rbox(0.62, 0.16, 0.06, 0.05, mat(0x8d96ab), 0.32, y, 0.09));
   }
-  g.rotation.set(0.32, -0.5, 0.06); return g;
+  g.rotation.set(0.3, -0.42, 0.1); return g;
 };
 
-function flask(liquid, glass = 0xd9c8ff, rim = 0x6d3fd6) {
+// Kolben mit zweifarbiger Flüssigkeit (Farbverlauf unten -> oben), Glas hell, Korken
+function flask(o) {
+  const { bottom, top, glass = 0xd6ecff, rim = 0x8fb4d8, cork = 0xd9863a, slim = 1, tall = 1, tilt = [0.22, -0.42, -0.2], fillTo = -0.02 } = o;
   const g = new THREE.Group();
   const prof = [[0.0, -0.98], [0.62, -0.94], [0.86, -0.78], [0.86, -0.6], [0.62, -0.1], [0.3, 0.4], [0.27, 0.62], [0.27, 1.02]];
-  const pts = new THREE.SplineCurve(prof.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(60).map(p => new THREE.Vector2(Math.max(0, p.x), p.y));
-  const shell = mesh(new THREE.LatheGeometry(pts, 40), glassMat(glass, 0.36));
-  const liqPts = pts.filter(p => p.y < -0.05).map(p => new THREE.Vector2(Math.max(0, p.x * 0.88), p.y * 0.98));
-  liqPts.push(new THREE.Vector2(0, -0.02)); liqPts.unshift(new THREE.Vector2(0, -0.96));
-  const liq = mesh(new THREE.LatheGeometry(liqPts.sort((a, b) => a.y - b.y), 40), mat(liquid, { roughness: 0.2 }));
-  g.add(liq, shell);
-  g.add(mesh(new THREE.TorusGeometry(0.29, 0.07, 12, 32), mat(rim), 0, 1.02, 0).rotateX(Math.PI / 2));
-  g.add(mesh(new THREE.CylinderGeometry(0.22, 0.19, 0.32, 24), mat(0xc2833a, { roughness: 0.6 }), 0, 1.22, 0));
-  for (const [x, y, z, r] of [[-0.2, -0.55, 0.3, 0.1], [0.22, -0.3, 0.25, 0.07], [0.1, -0.7, 0.4, 0.06]])
-    g.add(mesh(new THREE.SphereGeometry(r, 16, 16), mat(0xffffff), x, y, z));
-  g.rotation.set(0.25, -0.5, 0.12); return g;
+  const pts = new THREE.SplineCurve(prof.map(p => new THREE.Vector2(p[0] * slim, p[1] * tall))).getPoints(60).map(p => new THREE.Vector2(Math.max(0, p.x), p.y));
+  const shell = mesh(new THREE.LatheGeometry(pts, 40), glassMat(glass, 0.34));
+  const liqPts = pts.filter(p => p.y < fillTo * tall).map(p => new THREE.Vector2(Math.max(0, p.x * 0.88), p.y * 0.98));
+  liqPts.push(new THREE.Vector2(0, fillTo * tall)); liqPts.unshift(new THREE.Vector2(0, -0.96 * tall));
+  const lg = new THREE.LatheGeometry(liqPts.sort((a, b) => a.y - b.y), 40);
+  const cb = new THREE.Color(bottom), ct = new THREE.Color(top), col = [];
+  const pos = lg.attributes.position, y0 = -0.96 * tall, y1 = fillTo * tall;
+  for (let i = 0; i < pos.count; i++) { const t = Math.min(1, Math.max(0, (pos.getY(i) - y0) / (y1 - y0))); const c = cb.clone().lerp(ct, Math.pow(t, 1.4)); col.push(c.r, c.g, c.b); }
+  lg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.add(mesh(lg, mat(0xffffff, { roughness: 0.25, vertexColors: true })), shell);
+  g.add(mesh(new THREE.TorusGeometry(0.29 * slim, 0.07, 12, 32), mat(rim), 0, 1.02 * tall, 0).rotateX(Math.PI / 2));
+  g.add(mesh(new THREE.CylinderGeometry(0.22 * slim, 0.19 * slim, 0.34, 24), mat(cork, { roughness: 0.6 }), 0, 1.22 * tall, 0));
+  for (const [x, y, z, r] of [[-0.2, -0.6, 0.3, 0.1], [0.22, -0.35, 0.25, 0.07], [0.1, -0.75, 0.4, 0.06]])
+    g.add(mesh(new THREE.SphereGeometry(r, 16, 16), mat(0xffffff), x * slim, y * tall, z));
+  g.rotation.set(...tilt); return g;
 }
-MODELS.forschung = () => flask(0x5fd63f, 0xc0a8f0, 0x5a30b8);
-MODELS.potion_g = () => flask(0x5ee65a, 0xd6ffd6, 0x1f9d3a);
-MODELS.potion_y = () => flask(0xffc21a, 0xfff0c0, 0xc27a00);
-MODELS.potion_p = () => flask(0xd05cff, 0xf0d4ff, 0x7a2cc0);
+MODELS.forschung = () => flask({ bottom: 0xe05000, top: 0x8cc21c, glass: 0xcfe6ff, rim: 0x86a8e0, cork: 0xd98a3c });
+MODELS.potion_g = () => flask({ bottom: 0x14b070, top: 0x2f9ad8, glass: 0xe6fbff, rim: 0xc85a80, cork: 0xe0507a, slim: 0.86, tall: 1.12, tilt: [0.15, -0.3, 0] });
+MODELS.potion_y = () => flask({ bottom: 0xe89600, top: 0x2a86d8, glass: 0xe6f6ff, rim: 0xc85a80, cork: 0xe0507a, slim: 0.86, tall: 1.12, tilt: [0.15, -0.3, 0] });
+MODELS.potion_p = () => flask({ bottom: 0x7a3cd8, top: 0xb494f0, glass: 0xf2e8ff, rim: 0xc85a80, cork: 0xe0507a, slim: 0.86, tall: 1.12, tilt: [0.15, -0.3, 0] });
 
 MODELS.shop = () => {
   const g = new THREE.Group();
   const body = poly([[-1.0, 0.5], [1.0, 0.5], [0.78, -0.55], [-0.78, -0.55]]);
-  g.add(mesh(ext(body, 1.0, 0.1), mat(0xc8182f), 0, 0, 0));
-  g.add(rbox(1.7, 0.09, 0.86, 0.04, mat(0x4a0814), 0, 0.6, 0));            // dunkle Öffnung
-  g.add(rbox(2.06, 0.16, 1.16, 0.07, mat(0xe0405a), 0, 0.56, 0));           // Rand
-  g.add(rbox(1.68, 0.14, 0.06, 0.03, mat(0x8e1226), 0, -0.12, 0.52));
-  g.add(rbox(1.5, 0.14, 0.06, 0.03, mat(0x8e1226), 0, -0.36, 0.52));
+  g.add(mesh(ext(body, 1.0, 0.1), mat(0xcf1650), 0, 0, 0));
+  g.add(rbox(1.7, 0.09, 0.86, 0.04, mat(0x6a0a2c), 0, 0.6, 0));            // dunkle Öffnung
+  g.add(rbox(2.06, 0.16, 1.16, 0.07, mat(0xe83c6c), 0, 0.56, 0));           // Rand
+  g.add(rbox(1.68, 0.14, 0.06, 0.03, mat(0x8e0e36), 0, -0.12, 0.52));
+  g.add(rbox(1.5, 0.14, 0.06, 0.03, mat(0x8e0e36), 0, -0.36, 0.52));
   const arc = new THREE.EllipseCurve(0, 0, 0.92, 0.75, 0, Math.PI, false);
-  const p3 = arc.getPoints(30).map(p => new THREE.Vector3(p.x, p.y + 0.6, 0));
-  g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p3), 40, 0.1, 12), mat(0xc9d3e6, { metalness: 0.5, roughness: 0.25 })));
-  g.rotation.set(0.5, -0.6, 0.02); return g;
+  const p3 = arc.getPoints(30).map(p => new THREE.Vector3(p.x, p.y + 0.6, -0.1));
+  g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p3), 40, 0.1, 12), mat(0xe4e9f4, { roughness: 0.35 })));
+  g.rotation.set(0.55, -0.4, 0.04); return g;
 };
 
 MODELS.rebirth = () => {
+  // Aufspringende Kapsel: weiße Schale unten, roter Deckel klappt hinten auf, innen warmes Leuchten
   const g = new THREE.Group();
-  const base = mesh(new THREE.CylinderGeometry(0.9, 0.98, 0.2, 48), mat(0xdce8ff, { roughness: 0.5 }), 0, -0.66, 0);
-  g.add(base);
-  const ring = new THREE.Group();
-  const arrow = (a0, a1) => {
-    const R = 0.78, pts = [];
-    for (let i = 0; i <= 24; i++) { const a = a0 + (a1 - a0) * i / 24; pts.push(new THREE.Vector3(Math.cos(a) * R, Math.sin(a) * R, 0)); }
-    const m = mat(0xdc2b55);
-    ring.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.22, 14), m));
-    const H = 0.78, cone = mesh(new THREE.ConeGeometry(0.46, H, 28), m);
-    const tx = -Math.sin(a1), ty = Math.cos(a1);                                // Laufrichtung
-    cone.position.set(Math.cos(a1) * R + tx * H / 2, Math.sin(a1) * R + ty * H / 2, 0);
-    cone.rotation.z = a1;                                                       // Spitze zeigt in Laufrichtung
-    ring.add(cone);
-    const cap = mesh(new THREE.SphereGeometry(0.22, 16, 16), m, Math.cos(a0) * R, Math.sin(a0) * R, 0); ring.add(cap);
-  };
-  arrow(Math.PI * 0.1, Math.PI * 0.78); arrow(Math.PI * 1.1, Math.PI * 1.78);
-  ring.position.y = 0.42; ring.rotation.x = -0.15;
-  g.add(ring); g.rotation.set(0.5, -0.4, 0); return g;
+  const red = mat(0xe0264c), white = mat(0xf2f6ff, { roughness: 0.5 }), inner = mat(0x8a0f32, { roughness: 0.6 });
+  g.add(mesh(new THREE.SphereGeometry(1, 48, 28, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), white));
+  g.add(mesh(new THREE.CircleGeometry(0.98, 48), inner, 0, -0.02, 0).rotateX(-Math.PI / 2));
+  g.add(mesh(new THREE.SphereGeometry(0.42, 24, 18), mat(0xffd23f, { emissive: 0xffa800, emissiveIntensity: 0.55 }), 0, 0.02, 0.05));
+  g.add(mesh(new THREE.TorusGeometry(1.0, 0.07, 12, 56), mat(0xb8b4d0), 0, 0, 0).rotateX(Math.PI / 2));
+  const hinge = new THREE.Group(); hinge.position.set(0, 0.02, -0.92);
+  const lid = new THREE.Group(); lid.position.set(0, 0, 0.92);
+  lid.add(mesh(new THREE.SphereGeometry(1, 48, 28, 0, Math.PI * 2, 0, Math.PI / 2), red));
+  lid.add(mesh(new THREE.TorusGeometry(1.0, 0.07, 12, 56), mat(0xa01838), 0, 0, 0).rotateX(Math.PI / 2));
+  lid.add(mesh(new THREE.CircleGeometry(0.98, 48), inner, 0, 0.01, 0).rotateX(Math.PI / 2));
+  hinge.add(lid); hinge.rotation.x = -0.62; g.add(hinge);
+  g.rotation.set(0.62, -0.2, 0.04); return g;
 };
 
 MODELS.index = () => {
   const g = new THREE.Group();
-  const blue = mat(0x2660d8), navy = mat(0x163a94);
-  g.add(rbox(1.36, 1.82, 0.1, 0.05, blue, 0, 0, -0.26));
-  g.add(rbox(1.36, 1.82, 0.12, 0.05, blue, 0, 0, 0.26));
-  g.add(rbox(0.16, 1.82, 0.62, 0.06, navy, -0.68, 0, 0));
-  g.add(rbox(1.22, 1.66, 0.42, 0.04, mat(0xfff6dc, { roughness: 0.5 }), 0.02, 0, 0));
-  const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 0.2 : 0.42, a = -Math.PI / 2 + i * Math.PI / 5; i ? star.lineTo(Math.cos(a) * r, Math.sin(a) * r) : star.moveTo(Math.cos(a) * r, Math.sin(a) * r); } star.closePath();
-  g.add(mesh(ext(star, 0.06, 0.05), mat(0xffc21a, { metalness: 0.3 }), 0.02, 0.1, 0.36));
-  g.add(rbox(0.2, 0.46, 0.04, 0.02, mat(0xff4757), 0.36, 0.86, 0.34));
-  g.rotation.set(0.28, -0.7, 0.08); return g;
+  const blue = mat(0x2a6ce6), navy = mat(0x1a44a8), pale = mat(0x6fb0ff);
+  g.add(rbox(1.4, 1.86, 0.1, 0.05, blue, 0, 0, -0.27));                              // hinterer Deckel
+  g.add(rbox(1.4, 1.86, 0.12, 0.05, blue, 0, 0, 0.27));                              // vorderer Deckel
+  g.add(rbox(0.16, 1.86, 0.66, 0.06, navy, -0.7, 0, 0));                             // Rücken
+  g.add(rbox(1.26, 1.7, 0.44, 0.04, mat(0xf3f6ff, { roughness: 0.55 }), 0.02, 0, 0));  // Seiten
+  g.add(rbox(0.9, 0.6, 0.05, 0.06, pale, 0.02, 0.42, 0.34));                          // Titelschild
+  for (const y of [0.6, 0.42, 0.24]) g.add(rbox(0.62, 0.07, 0.04, 0.02, mat(0xe6f2ff), 0.02, y, 0.375));
+  g.rotation.set(-0.28, -0.46, 0.1); return g;
 };
 
 MODELS.drop_arcade = () => {
@@ -144,33 +164,54 @@ MODELS.drop_arcade = () => {
   g.rotation.set(0.5, -0.25, 0); return g;
 };
 
-MODELS.nut = () => {
-  const s = new THREE.Shape(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; i ? s.lineTo(Math.cos(a), Math.sin(a)) : s.moveTo(Math.cos(a), Math.sin(a)); } s.closePath();
-  const h = new THREE.Path(); h.absarc(0, 0, 0.4, 0, Math.PI * 2, true); s.holes.push(h);
-  const g = new THREE.Group(); g.add(mesh(ext(s, 0.5, 0.1), mat(0xf5a814, { metalness: 0.4, roughness: 0.3 })));
-  g.rotation.set(0.85, -0.35, 0.1); return g;
+// Kreuzschlitz-Schraube (Achse = +Y, Kopf oben). Farbe wählbar, Schlitz: 'cross' | 'slot'
+function screw(col, o = {}) {
+  const { head = col, thread = col, slotCol = 0x6b3f00, slot = 'cross', hex = false, len = 1.15 } = o;
+  const g = new THREE.Group();
+  const hp = [[0, 0.34], [0.26, 0.33], [0.42, 0.24], [0.48, 0.08], [0.48, -0.05], [0, -0.05]];
+  const hpts = new THREE.SplineCurve(hp.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(40).map(p => new THREE.Vector2(Math.max(0, p.x), p.y));
+  g.add(mesh(new THREE.LatheGeometry(hpts, 40), mat(head, { metalness: 0.2, roughness: 0.4 })));
+  const sm = mat(slotCol, { roughness: 0.7 });
+  g.add(rbox(0.42, 0.045, 0.075, 0.02, sm, 0, 0.335, 0));
+  if (slot === 'cross') g.add(rbox(0.075, 0.045, 0.42, 0.02, sm, 0, 0.335, 0));
+  if (hex) g.add(mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.14, 6), mat(thread, { metalness: 0.2 }), 0, -0.12, 0));
+  const shank = mat(thread, { metalness: 0.25, roughness: 0.42 });
+  g.add(mesh(new THREE.CylinderGeometry(0.17, 0.17, len, 24), shank, 0, -0.06 - len / 2, 0));
+  const ridge = mat(new THREE.Color(thread).multiplyScalar(0.8), { metalness: 0.2 });
+  for (let i = 0; i < 7; i++) g.add(mesh(new THREE.TorusGeometry(0.185, 0.045, 8, 24), ridge, 0, -0.2 - i * (len - 0.3) / 6, 0).rotateX(Math.PI / 2));
+  g.add(mesh(new THREE.ConeGeometry(0.17, 0.3, 24), shank, 0, -0.06 - len - 0.14, 0).rotateX(Math.PI));
+  return g;
+}
+const aimed = (obj, dir, pos) => { obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...dir).normalize()); obj.position.set(...pos); return obj; };
+const GOLD = { head: 0xe8a812, thread: 0xb87404 };
+MODELS.nut = () => {   // einzelne Goldschraube (kleine Preis-Symbole)
+  const g = new THREE.Group();
+  g.add(aimed(screw(GOLD.head, GOLD), [-0.55, 0.6, 0.6], [0.2, 0.1, 0]));
+  return g;
 };
-
-MODELS.gear = () => {
-  const s = new THREE.Shape(); const N = 8;
-  for (let i = 0; i < N; i++) { const a = i * 2 * Math.PI / N, w = Math.PI / N;
-    const pts = [[0.62, a - w * 0.9], [1.0, a - w * 0.38], [1.0, a + w * 0.38], [0.62, a + w * 0.9]];
-    pts.forEach(([r, t], k) => { const x = Math.cos(t) * r, y = Math.sin(t) * r; (i === 0 && k === 0) ? s.moveTo(x, y) : s.lineTo(x, y); }); }
-  s.closePath(); const h = new THREE.Path(); h.absarc(0, 0, 0.32, 0, Math.PI * 2, true); s.holes.push(h);
-  const g = new THREE.Group(); g.add(mesh(ext(s, 0.42, 0.09), mat(0xa468ff, { metalness: 0.2 })));
-  g.rotation.set(0.85, -0.35, 0.1); return g;
+MODELS.screws = () => {   // Haufen aus drei Goldschrauben (Währung)
+  const g = new THREE.Group();
+  g.add(aimed(screw(GOLD.head, { ...GOLD, slot: 'slot' }), [-0.5, 0.6, 0.62], [-0.55, 0.62, 0.1]));
+  g.add(aimed(screw(GOLD.head, GOLD), [0.62, 0.5, 0.6], [0.62, 0.42, 0.35]));
+  g.add(aimed(screw(GOLD.head, GOLD), [-0.6, -0.3, 0.75], [-0.5, -0.5, 0.5]));
+  g.rotation.set(0.05, -0.1, 0.05); return g;
 };
+MODELS.gear = () => {   // lila Schraube (zweite Währung)
+  const g = new THREE.Group();
+  g.add(aimed(screw(0x7c34d8, { head: 0x7c34d8, thread: 0x6a2ac0, slotCol: 0x2c0e66, hex: true, len: 1.2 }), [0.55, 0.65, 0.55], [0.35, 0.3, 0]));
+  return g;
+};
+MODELS.screw_p = MODELS.gear;
 
 MODELS.clover = () => {
   const g = new THREE.Group();
   const heart = new THREE.Shape(); heart.moveTo(0, 0);
   heart.bezierCurveTo(-0.32, 0.16, -0.54, 0.6, -0.3, 0.84); heart.bezierCurveTo(-0.14, 1.0, 0, 0.86, 0, 0.72);
   heart.bezierCurveTo(0, 0.86, 0.14, 1.0, 0.3, 0.84); heart.bezierCurveTo(0.54, 0.6, 0.32, 0.16, 0, 0);
-  const geo = new THREE.ExtrudeGeometry(heart, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.06, bevelSegments: 4, curveSegments: 24 });
-  for (let k = 0; k < 4; k++) { const m = mesh(geo, mat(k % 2 ? 0x1f9a2e : 0x2bb23a)); m.rotation.z = k * Math.PI / 2; g.add(m); }
-  const stem = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0.05), new THREE.Vector3(0.1, -0.5, 0.05), new THREE.Vector3(0.4, -0.85, 0.05)]);
-  g.add(mesh(new THREE.TubeGeometry(stem, 20, 0.07, 10), mat(0x2aa63a)));
-  g.rotation.set(0.35, -0.4, 0); return g;
+  const geo = new THREE.ExtrudeGeometry(heart, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.07, bevelSegments: 4, curveSegments: 24 });
+  for (let k = 0; k < 4; k++) { const m = mesh(geo, mat(k % 2 ? 0x2a8a34 : 0x369c3c)); m.rotation.z = k * Math.PI / 2; g.add(m); }
+  g.add(mesh(new THREE.SphereGeometry(0.16, 16, 12), mat(0x58b850), 0, 0, 0.3));
+  g.rotation.set(0.3, -0.3, 0.12); return g;
 };
 
 MODELS.lock = () => {
@@ -191,17 +232,42 @@ MODELS.star = () => {
 
 
 
-MODELS.teleport = () => {
+MODELS.teleport = () => {   // Joystick: blaugraue Basis, roter Ball, kleiner Ball hinten links
   const g = new THREE.Group();
-  g.add(mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.24, 48), mat(0x3d4868, { roughness: 0.5 }), 0, -0.95, 0));
-  g.add(mesh(new THREE.CylinderGeometry(1.0, 1.05, 0.1, 48), mat(0x2fe0d0, { emissive: 0x0aa0a0, emissiveIntensity: 0.6 }), 0, -0.8, 0));
-  const ring = mesh(new THREE.TorusGeometry(0.95, 0.2, 24, 64), mat(0x3a72e0, { roughness: 0.35 }), 0, 0.15, 0);
-  g.add(ring);
-  const disc = mesh(new THREE.CircleGeometry(0.85, 48), new THREE.MeshPhysicalMaterial({ color: 0x66f0ff, emissive: 0x22c8ff, emissiveIntensity: 0.7, roughness: 0.2, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }), 0, 0.15, 0);
-  g.add(disc);
-  for (const [x, y, r] of [[-0.3, 0.45, 0.13], [0.35, -0.05, 0.1], [0.05, 0.05, 0.16]]) g.add(mesh(new THREE.SphereGeometry(r, 16, 16), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }), x, y, 0.05));
-  for (const s of [-1, 1]) g.add(rbox(0.26, 0.5, 0.26, 0.06, mat(0x2f6ae0), s * 0.95, -0.55, 0));
-  g.rotation.set(0.28, -0.5, 0); return g;
+  g.add(rbox(1.95, 0.62, 1.95, 0.2, mat(0x6f8fd6), 0, -0.7, 0));
+  g.add(rbox(1.55, 0.14, 1.55, 0.1, mat(0x4a66b8), 0, -0.36, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.9, 20), mat(0xc4cee6, { metalness: 0.3, roughness: 0.4 }), 0, 0.1, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.62, 40, 30), mat(0xf03a72, { roughness: 0.32 }), 0, 0.72, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.16, 14, 12), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.5 }), -0.22, 0.98, 0.42));
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 12), mat(0xc4cee6, { metalness: 0.3 }));
+  stick.position.set(-1.0, 0.0, -0.35); stick.rotation.z = 0.3; g.add(stick);
+  g.add(mesh(new THREE.SphereGeometry(0.2, 18, 14), mat(0xf03a72, { roughness: 0.32 }), -1.14, 0.5, -0.35));
+  g.rotation.set(0.5, -0.5, 0.05); return g;
+};
+
+MODELS.backpack = () => {   // roter Rucksack mit Vordertasche
+  const g = new THREE.Group();
+  const red = mat(0xe0342a), redD = mat(0xb82a22), redL = mat(0xf25a44);
+  g.add(rbox(1.6, 1.85, 1.0, 0.42, red, 0, 0, 0));
+  g.add(rbox(1.5, 0.6, 1.06, 0.26, redD, 0, 0.78, 0));                               // Deckel
+  g.add(rbox(1.15, 0.85, 0.36, 0.16, redL, 0, -0.42, 0.6));                          // Vordertasche
+  g.add(rbox(0.95, 0.12, 0.38, 0.05, redD, 0, -0.1, 0.62));
+  g.add(rbox(0.36, 0.3, 0.06, 0.05, mat(0xfff1e0), 0, -0.5, 0.8));                   // Etikett
+  g.add(rbox(0.1, 0.16, 0.05, 0.02, mat(0x8a1a14), 0, -0.5, 0.84));
+  for (const s of [-1, 1]) g.add(rbox(0.36, 0.9, 0.5, 0.15, redL, s * 0.92, -0.35, 0.1));   // Seitentaschen
+  g.add(mesh(new THREE.TorusGeometry(0.28, 0.07, 10, 28), mat(0x7a1a14), 0, 1.16, 0));      // Tragegriff
+  g.add(rbox(0.32, 0.12, 0.1, 0.04, mat(0xe8ecf6, { metalness: 0.3 }), 0, 0.42, 0.56));     // Schnalle
+  g.rotation.set(0.22, -0.5, 0.05); return g;
+};
+
+MODELS.ice = () => {   // Eiswürfel mit Rissen (Boost-Anzeige)
+  const g = new THREE.Group();
+  g.add(rbox(1.7, 1.7, 1.7, 0.34, mat(0xbfe2fb, { roughness: 0.2, clearcoat: 0.8, envMapIntensity: 0.4 }), 0, 0, 0));
+  g.add(rbox(1.2, 0.5, 0.05, 0.08, mat(0x86bce8), 0, -0.45, 0.86));
+  const crack = (x1, y1, x2, y2, z = 0.87) => { const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); const c = rbox(L, 0.06, 0.04, 0.02, mat(0x3a78b0), (x1 + x2) / 2, (y1 + y2) / 2, z); c.rotation.z = Math.atan2(dy, dx); g.add(c); };
+  crack(-0.5, 0.35, 0.1, -0.1); crack(0.1, -0.1, 0.55, -0.55); crack(0.1, -0.1, 0.35, 0.3); crack(-0.55, -0.2, -0.2, -0.5);
+  g.add(rbox(0.5, 0.12, 0.06, 0.04, mat(0xffffff), -0.35, 0.65, 0.86));
+  g.rotation.set(0.5, -0.65, 0.05); return g;
 };
 
 // ---------------------------------------------------------------- Bots (je einer pro Seltenheit), Körper in Seltenheitsfarbe
@@ -621,7 +687,7 @@ const downArrow = (m, y = 0, depth = 0.12) => {
   const arrow = poly([[-0.3, 0.55], [0.3, 0.55], [0.3, 0.05], [0.66, 0.05], [0, -0.62], [-0.66, 0.05], [-0.3, 0.05]]);
   const ar = mesh(ext(arrow, depth, 0.05, 3), m, 0, y, 0); ar.rotation.x = -Math.PI / 2; return ar;
 };
-MODELS.drop = () => {   // Kern-Würfel wie der Würfel in deiner Referenz, Pfeil nach unten auf der Vorderseite
+MODELS.drop_cube = () => {   // Kern-Würfel wie der Würfel in deiner Referenz, Pfeil nach unten auf der Vorderseite
   const g = new THREE.Group();
   g.add(rbox(1.9, 1.9, 1.9, 0.3, mat(0x1aa8e8, { roughness: 0.34, emissive: 0x0a5f9a, emissiveIntensity: 0.28 }), 0, 0, 0));
   g.add(rbox(1.3, 1.3, 0.05, 0.2, mat(0x0f7fc4, { roughness: 0.4 }), 0, 0, 0.955));                // vertiefte Fläche
@@ -629,6 +695,17 @@ MODELS.drop = () => {   // Kern-Würfel wie der Würfel in deiner Referenz, Pfei
   const ar = mesh(ext(arrow, 0.1, 0.05, 3), mat(0xffffff, { roughness: 0.3, emissive: 0xcfeeff, emissiveIntensity: 0.3 }), 0, 0.02, 1.05); ar.scale.setScalar(0.85); g.add(ar);
   for (const [x, y, z, r] of [[-1.2, 0.85, 0.5, 0.1], [1.1, 1.1, -0.2, 0.08]]) g.add(mesh(new THREE.SphereGeometry(r, 12, 12), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }), x, y, z));
   g.rotation.set(0.42, -0.5, 0); return g;
+};
+MODELS.drop = () => {   // roter Druckknopf auf grauer Metallplatte
+  const g = new THREE.Group();
+  const plate = mat(0x8593b3, { metalness: 0.3, roughness: 0.45 });
+  g.add(mesh(new THREE.CylinderGeometry(1.5, 1.6, 0.34, 72), plate, 0, -0.5, 0));
+  g.add(mesh(new THREE.TorusGeometry(1.52, 0.09, 14, 80), mat(0xb0bcd6, { metalness: 0.3, roughness: 0.4 }), 0, -0.33, 0).rotateX(Math.PI / 2));
+  g.add(mesh(new THREE.CylinderGeometry(1.22, 1.22, 0.06, 64), mat(0x5b6889, { metalness: 0.3, roughness: 0.5 }), 0, -0.31, 0));
+  const prof = [[0, -0.3], [1.02, -0.3], [1.06, -0.2], [1.06, 0.3], [0.99, 0.46], [0.84, 0.55], [0.5, 0.6], [0, 0.61]];
+  const pts = new THREE.SplineCurve(prof.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(80).map(p => new THREE.Vector2(Math.max(0, p.x), p.y));
+  g.add(mesh(new THREE.LatheGeometry(pts, 72), mat(0xd41c1c, { roughness: 0.4, clearcoat: 0.4, clearcoatRoughness: 0.3, emissive: 0x7a0000, emissiveIntensity: 0.12 }), 0, -0.2, 0));
+  g.rotation.set(0.62, 0, 0); return g;
 };
 MODELS.drop_c = () => {   // Trichter mit leuchtendem Kern und Pfeil
   const g = new THREE.Group(), metal = mat(0x8fa0c4, { metalness: 0.5, roughness: 0.3 });
@@ -653,9 +730,9 @@ MODELS.drop_d = () => {   // Kristall-Kern mit Goldring
 // ---------------------------------------------------------------- AUTO-Schalter (aus / an)
 const toggle = on => () => {
   const g = new THREE.Group();
-  g.add(rbox(2.3, 1.0, 0.8, 0.5, mat(on ? 0x2fbf4a : 0x6b7286, { roughness: 0.45, emissive: on ? 0x0c6a20 : 0x000000, emissiveIntensity: on ? 0.35 : 0 }), 0, 0, 0));
-  g.add(rbox(2.0, 0.72, 0.1, 0.34, mat(on ? 0x1d8f36 : 0x4a5164, { roughness: 0.6 }), 0, 0, 0.36));
-  g.add(mesh(new THREE.SphereGeometry(0.62, 40, 30), mat(0xffffff, { roughness: 0.3, clearcoat: 0.4 }), on ? 0.72 : -0.72, 0.02, 0.36));
+  g.add(rbox(2.3, 1.0, 0.8, 0.5, mat(on ? 0x2fbf4a : 0x4a5163, { roughness: 0.45, emissive: on ? 0x0c6a20 : 0x000000, emissiveIntensity: on ? 0.35 : 0 }), 0, 0, 0));
+  g.add(rbox(2.0, 0.72, 0.1, 0.34, mat(on ? 0x1d8f36 : 0x303647, { roughness: 0.6 }), 0, 0, 0.36));
+  g.add(mesh(new THREE.SphereGeometry(0.62, 40, 30), mat(0xe9eef7, { roughness: 0.35, clearcoat: 0.4 }), on ? 0.72 : -0.72, 0.02, 0.36));
   g.rotation.set(0.32, -0.08, 0); return g;
 };
 MODELS.toggle_off = toggle(false);
