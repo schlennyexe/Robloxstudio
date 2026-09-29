@@ -1244,8 +1244,8 @@ local function buildRows(key, rows)
 			ch:Destroy()
 		end
 	end
-	local textW = cols == 1 and 250 or 130
 	for i, r in ipairs(rows) do
+		local textW = r.btn and 240 or 110   -- Platz rechts für den Button
 		local card = make("Frame", { Name = "Row", BackgroundColor3 = C.white, LayoutOrder = i }, host)
 		local sprKey = r.card or "green4"
 		if useAtlas then
@@ -1260,14 +1260,14 @@ local function buildRows(key, rows)
 		local ic = make("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 12), Size = UDim2.fromOffset(64, 64), ZIndex = 3 }, card)
 		if r.bot and useBots and BSPR[r.bot] then
 			botSprite(ic, r.bot, { sz = UDim2.fromOffset(72, 72), pos = UDim2.fromOffset(-4, -4), z = 3 })
+		elseif r.spr and useAtlas and SPR[r.spr] then
+			sprite(ic, r.spr, { sz = UDim2.fromOffset(64, 64), z = 3 })
 		elseif r.dot then
 			ic.BackgroundTransparency = 0
 			ic.BackgroundColor3 = r.dot
 			round(ic, 999)
 			outline(ic, 4)
 			text(ic, r.title:sub(1, 1), 34, { stroke = 3 })
-		elseif useAtlas and r.spr and SPR[r.spr] then
-			sprite(ic, r.spr, { z = 3 })
 		else
 			glyph(ic, r.emoji or "⭐", 44)
 		end
@@ -1311,30 +1311,30 @@ end
 do
 	local defs = {
 		{ key = "aufgaben", title = "Aufgaben", emoji = "📋", pal = P.green, cols = 1, rows = {
-			{ id = "q1", emoji = "🎯", title = "10 Kerne droppen", sub = "Belohnung: 250 Schrauben", progress = 0.6, btn = "6 / 10", btnSpr = "gray2", btnPal = P.gray },
-			{ id = "q2", emoji = "🤖", title = "Einen Bot bauen", sub = "Belohnung: 1 Glückstrank", progress = 1, btn = "Abholen", btnSpr = "green2", btnPal = P.green },
-			{ id = "q3", emoji = "⬆️", title = "3 Upgrades kaufen", sub = "Belohnung: 1 Zahnrad", progress = 0.33, btn = "1 / 3", btnSpr = "gray2", btnPal = P.gray },
+			{ id = "q1", emoji = "🎯", bot = "up_kerne", title = "10 Kerne droppen", sub = "Belohnung: 250 Schrauben", progress = 0.6, btn = "6 / 10", btnSpr = "gray2", btnPal = P.gray },
+			{ id = "q2", emoji = "🤖", bot = "bot_toaster", title = "Einen Bot bauen", sub = "Belohnung: 1 Glückstrank", progress = 1, btn = "Abholen", btnSpr = "green2", btnPal = P.green },
+			{ id = "q3", emoji = "⬆️", bot = "up_tempo", title = "3 Upgrades kaufen", sub = "Belohnung: 1 Zahnrad", progress = 0.33, btn = "1 / 3", btnSpr = "gray2", btnPal = P.gray },
 		} },
 		{ key = "forschung", title = "Forschung", emoji = "🔬", pal = P.purple, cols = 1, rows = {
-			{ id = "f1", emoji = "💻", title = "Auto-Drop-Skript", sub = "Programmieren 40 · DROP läuft von allein", progress = 0.25, btn = "Start" },
-			{ id = "f2", emoji = "🍀", title = "Glücks-Algorithmus", sub = "Programmieren 60, Labor 30 · +3 Glück", progress = 0, btn = "Start" },
-			{ id = "f3", emoji = "⚡", title = "Energie-Zelle", sub = "Labor 80, Kraftwerk 40 · Einkommen +15 %", progress = 0.7, btn = "Start" },
-			{ id = "f4", emoji = "🏭", title = "Werkhalle", sub = "Bauen 60, Kraftwerk 30 · +1 Arbeitsplatz", progress = 0, btn = "Start" },
+			{ id = "f1", emoji = "💻", bot = "bot_gameboy", title = "Auto-Drop-Skript", sub = "Programmieren 40 · DROP läuft von allein", progress = 0.25, btn = "Start" },
+			{ id = "f2", emoji = "🍀", spr = "clover", title = "Glücks-Algorithmus", sub = "Programmieren 60, Labor 30 · +3 Glück", progress = 0, btn = "Start" },
+			{ id = "f3", emoji = "⚡", spr = "gear", title = "Energie-Zelle", sub = "Labor 80, Kraftwerk 40 · Einkommen +15 %", progress = 0.7, btn = "Start" },
+			{ id = "f4", emoji = "🏭", bot = "up_plaetze", title = "Werkhalle", sub = "Bauen 60, Kraftwerk 30 · +1 Arbeitsplatz", progress = 0, btn = "Start" },
 		} },
 		{ key = "shop", title = "Shop", emoji = "🛒", pal = P.red, cols = 2, rows = {
-			{ id = "doppelt", emoji = "💰", title = "2× Schrauben", sub = "Doppeltes Einkommen", card = "gold4", btn = "R$ 199", btnSpr = "green2", btnPal = P.green },
-			{ id = "vip", emoji = "⭐", title = "VIP", sub = "+1 Kern pro Drop", card = "gold4", btn = "R$ 299", btnSpr = "green2", btnPal = P.green },
-			{ id = "glueck", emoji = "🍀", title = "Glückspass", sub = "+10 Glücksstufen", card = "gold4", btn = "R$ 249", btnSpr = "green2", btnPal = P.green },
-			{ id = "plaetze", emoji = "🏭", title = "Große Werkstatt", sub = "+5 Werkstatt-Plätze", card = "gold4", btn = "R$ 149", btnSpr = "green2", btnPal = P.green },
+			{ id = "doppelt", emoji = "💰", spr = "nut", title = "2× Schrauben", sub = "Doppeltes Einkommen", card = "gold4", btn = "R$ 199", btnSpr = "green2", btnPal = P.green },
+			{ id = "vip", emoji = "⭐", spr = "star", title = "VIP", sub = "+1 Kern pro Drop", card = "gold4", btn = "R$ 299", btnSpr = "green2", btnPal = P.green },
+			{ id = "glueck", emoji = "🍀", spr = "clover", title = "Glückspass", sub = "+10 Glücksstufen", card = "gold4", btn = "R$ 249", btnSpr = "green2", btnPal = P.green },
+			{ id = "plaetze", emoji = "🏭", bot = "up_plaetze", title = "Große Werkstatt", sub = "+5 Werkstatt-Plätze", card = "gold4", btn = "R$ 149", btnSpr = "green2", btnPal = P.green },
 			{ id = "t1", spr = "potion_g", title = "Glückstrank", sub = "+12 Glück, 5 Min", btn = "R$ 25", btnSpr = "blue2", btnPal = P.blue },
 			{ id = "t2", spr = "potion_y", title = "Schraubentrank", sub = "Einkommen ×2, 5 Min", btn = "R$ 45", btnSpr = "blue2", btnPal = P.blue },
 			{ id = "t3", spr = "potion_p", title = "Turbotrank", sub = "40 % schneller droppen", btn = "R$ 35", btnSpr = "blue2", btnPal = P.blue },
 		} },
 		{ key = "teleport", title = "Teleport", emoji = "🌀", pal = P.blue, cols = 1, rows = {
-			{ id = "brett", emoji = "🎯", title = "Glücksbrett", sub = "Kerne droppen und Bots bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
-			{ id = "werkstatt", emoji = "🏭", title = "Werkstatt", sub = "Arbeiter forschen und bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
-			{ id = "invasion", emoji = "🛡️", title = "Invasion", sub = "Verteidiger schützen den Tresor", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
-			{ id = "bots", emoji = "🤖", title = "Bots", sub = "Deine gesammelten Bots ansehen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "brett", emoji = "🎯", bot = "up_reihen", title = "Glücksbrett", sub = "Kerne droppen und Bots bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "werkstatt", emoji = "🏭", bot = "up_plaetze", title = "Werkstatt", sub = "Arbeiter forschen und bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "invasion", emoji = "🛡️", bot = "bot_samurai", title = "Invasion", sub = "Verteidiger schützen den Tresor", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "bots", emoji = "🤖", bot = "bot_toaster", title = "Bots", sub = "Deine gesammelten Bots ansehen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
 		} },
 		{ key = "bots", title = "Bots", emoji = "🤖", pal = P.purple, cols = 2, rows = (function()
 			local out = {}
