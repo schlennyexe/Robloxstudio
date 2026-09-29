@@ -14,6 +14,8 @@
 	Icons sind vorerst Emojis. Eigene Icons: ICON_IMAGES unten mit rbxassetid befüllen.
 ]]
 
+print("[DropABotUI] Skript gestartet")
+
 local DEMO = true
 
 -- Eigene Icon-Bilder (optional). Beispiel: ICON_IMAGES.shop = "rbxassetid://123456"
@@ -412,6 +414,7 @@ local gui = make("ScreenGui", {
 	DisplayOrder = 10,
 }, nil)
 
+gui.Parent = playerGui
 local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
 local rootScale = make("UIScale", {}, root)
 local function rescale()
@@ -1136,7 +1139,7 @@ function UI.feed(cfg)
 end
 
 shared.DropABotUI = UI
-gui.Parent = playerGui
+print("[DropABotUI] UI gebaut, Elemente:", #gui:GetDescendants())
 
 -- =====================================================================
 --  DEMO (nur Optik ansehen; DEMO = false setzen, sobald das Spiel die API nutzt)
@@ -1209,3 +1212,5 @@ if DEMO then
 		UI.feed({ player = "Taffy", rarity = "Göttlich", bot = "Satelliten-Bot", oneIn = 6500 })
 	end)
 end
+
+-- ENDE DropABotUI (wenn du diese Zeile siehst, ist der ganze Text da)
