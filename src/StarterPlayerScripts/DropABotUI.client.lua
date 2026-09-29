@@ -11,19 +11,56 @@
 	  Dann DEMO = false setzen.
 
 	Stil: knallbunt, dicke schwarze Konturen, Verläufe mit Glanz, fette runde Schrift (FredokaOne).
-	Icons sind vorerst Emojis. Eigene Icons: ICON_IMAGES unten mit rbxassetid befüllen.
+	Glänzende Bilder: assets/ui/atlas.png in Studio hochladen und ATLAS_ID unten eintragen (siehe DESIGN.md).
 ]]
 
 print("[DropABotUI] Skript gestartet")
 
 local DEMO = true
 
--- Eigene Icon-Bilder (optional). Beispiel: ICON_IMAGES.shop = "rbxassetid://123456"
-local ICON_IMAGES = {}
+-- BILD-ATLAS: die Datei assets/ui/atlas.png (eine einzige PNG) in Studio hochladen und die ID hier eintragen.
+-- Es reicht die Zahl, z.B. "123456789". Leer lassen = das Skript zeichnet die Knöpfe selbst (schlichter).
+local ATLAS_ID = ""
+
+-- Klick-Geräusche (optional). Leer lassen = stumm. Eigene Sounds: "rbxassetid://ZAHL"
+local SOUND_IDS = { click = "rbxasset://sounds/clickfast.wav", buy = "rbxasset://sounds/electronicpingshort.wav", hover = "" }
+
+-- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
+local SPR = {
+	upgrades = { 0, 0, 224, 224 },
+	aufgaben = { 224, 0, 224, 224 },
+	forschung = { 448, 0, 224, 224 },
+	shop = { 672, 0, 224, 224 },
+	rebirth = { 0, 224, 224, 224 },
+	index = { 224, 224, 224, 224 },
+	close = { 448, 224, 224, 224 },
+	plus = { 672, 224, 224, 224 },
+	nut = { 896, 0, 128, 128 },
+	gear = { 896, 128, 128, 128 },
+	clover = { 896, 256, 128, 128 },
+	lock = { 576, 448, 128, 128 },
+	glint = { 704, 448, 128, 128 },
+	star = { 832, 448, 128, 128 },
+	drop = { 0, 448, 576, 192 },
+	gold2 = { 0, 640, 256, 128 },
+	gray2 = { 256, 640, 256, 128 },
+	green2 = { 512, 640, 256, 128 },
+	blue2 = { 768, 640, 256, 128 },
+	green4 = { 0, 768, 512, 128 },
+	dark4 = { 512, 768, 512, 128 },
+	gray4 = { 0, 896, 512, 128 },
+	gold4 = { 512, 896, 512, 128 },
+}
+
+if ATLAS_ID:match("^%d+$") then
+	ATLAS_ID = "rbxassetid://" .. ATLAS_ID
+end
+local useAtlas = ATLAS_ID ~= ""
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -223,6 +260,106 @@ local function tween(o, t, props, style, dir)
 	return tw
 end
 
+-- Bild aus dem Atlas
+local function sprite(parent, key, o)
+	o = o or {}
+	local r = SPR[key]
+	return make("ImageLabel", {
+		Name = o.name or "Art",
+		BackgroundTransparency = 1,
+		Image = ATLAS_ID,
+		ImageRectOffset = Vector2.new(r[1], r[2]),
+		ImageRectSize = Vector2.new(r[3], r[4]),
+		Size = o.sz or UDim2.fromScale(1, 1),
+		Position = o.pos or UDim2.new(),
+		AnchorPoint = o.anchor or Vector2.zero,
+		ZIndex = o.z or 1,
+	}, parent)
+end
+
+local function playSound(key)
+	local id = SOUND_IDS[key]
+	if not id or id == "" then
+		return
+	end
+	if id:match("^%d+$") then
+		id = "rbxassetid://" .. id
+	end
+	local snd = make("Sound", { SoundId = id, Volume = 0.5 }, SoundService)
+	snd:Play()
+	task.delay(3, function()
+		snd:Destroy()
+	end)
+end
+
+-- Ebene für Effekte (Funken), wird beim Aufbau des Bildschirms angelegt
+local root, rootScale, fxLayer
+
+-- Funken und Ring beim Klick
+local function burst(target)
+	if not fxLayer or not target or not target.Parent then
+		return
+	end
+	local c = (target.AbsolutePosition + target.AbsoluteSize / 2 - fxLayer.AbsolutePosition) / rootScale.Scale
+	local ring = make("Frame", {
+		Name = "Ring", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(c.X, c.Y), Size = UDim2.fromOffset(30, 30),
+	}, fxLayer)
+	round(ring, 999)
+	local st = outline(ring, 5, C.white)
+	tween(ring, 0.4, { Size = UDim2.fromOffset(130, 130) })
+	tween(st, 0.4, { Transparency = 1, Thickness = 1 })
+	task.delay(0.45, function()
+		ring:Destroy()
+	end)
+	for i = 1, 7 do
+		local ang = math.rad(360 / 7 * i + math.random(-18, 18))
+		local dist = math.random(50, 84)
+		local size = math.random(18, 30)
+		local goal = UDim2.fromOffset(c.X + math.cos(ang) * dist, c.Y + math.sin(ang) * dist)
+		local sp
+		if useAtlas then
+			sp = sprite(fxLayer, "glint", {
+				name = "Spark", sz = UDim2.fromOffset(size, size), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromOffset(c.X, c.Y), z = 2,
+			})
+			sp.ImageColor3 = Color3.fromRGB(255, math.random(215, 255), math.random(120, 190))
+			tween(sp, 0.55, { Position = goal, Size = UDim2.fromOffset(4, 4), ImageTransparency = 1, Rotation = math.random(-160, 160) })
+		else
+			sp = glyph(fxLayer, "✨", size, { sz = UDim2.fromOffset(size, size), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromOffset(c.X, c.Y), z = 2 })
+			tween(sp, 0.55, { Position = goal, TextTransparency = 1, Rotation = math.random(-160, 160) })
+		end
+		task.delay(0.6, function()
+			sp:Destroy()
+		end)
+	end
+end
+
+-- Glanzstreifen, der alle paar Sekunden über den Knopf läuft
+local function addShine(parent, radiusScale)
+	local clip = make("Frame", {
+		Name = "Shine", BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 2,
+		Position = UDim2.fromScale(0.04, 0.03), Size = UDim2.fromScale(0.92, 0.86),
+	}, parent)
+	make("UICorner", { CornerRadius = UDim.new(radiusScale or 0.22, 0) }, clip)
+	local bar = make("Frame", {
+		Name = "Bar", BackgroundColor3 = C.white, BorderSizePixel = 0, Rotation = 20, AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(-0.4, 0.5), Size = UDim2.fromScale(0.26, 1.8), ZIndex = 2,
+	}, clip)
+	make("UIGradient", {
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.35), NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, bar)
+	task.spawn(function()
+		task.wait(math.random() * 3)
+		while clip.Parent do
+			bar.Position = UDim2.fromScale(-0.4, 0.5)
+			tween(bar, 0.7, { Position = UDim2.fromScale(1.4, 0.5) }, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+			task.wait(3.7 + math.random() * 3)
+		end
+	end)
+end
+
 -- Regenbogen-Text (Kosmisch)
 local rainbows = {}
 local rainbowPhase = 0
@@ -275,8 +412,10 @@ end)
 --  BAUSTEINE
 -- =====================================================================
 
--- Dicker 3D-Knopf: Schatten-Unterseite + Verlaufs-Oberseite mit Glanz.
--- cfg: Name, Size, Position, AnchorPoint, pal, radius, depth, text, textSize, z, onClick
+-- Dicker 3D-Knopf. Mit Bild-Atlas (cfg.spr) kommt ein fertiges glänzendes Bild zum Einsatz,
+-- sonst zeichnet das Skript Schatten-Unterseite und Verlaufs-Oberseite selbst.
+-- Beim Drücken wird der Knopf gequetscht und federt zurück, beim Darüberfahren wackelt er.
+-- cfg: Name, Size, Position, AnchorPoint, pal, spr, radius, depth, text, textSize, z, shine, burst, onClick
 local function chunky(parent, cfg)
 	local depth = cfg.depth or 5
 	local r = cfg.radius or 14
@@ -290,66 +429,110 @@ local function chunky(parent, cfg)
 		ZIndex = cfg.z or 1,
 	}, parent)
 	local sc = make("UIScale", {}, holder)
-	local base = make("Frame", {
-		Name = "Base",
-		BackgroundColor3 = darker(cfg.pal[2], 0.5),
-		Position = UDim2.new(0, 0, 0, depth),
-		Size = UDim2.new(1, 0, 1, -depth),
-		ZIndex = 1,
+	-- Anim-Rahmen: unten verankert, wird gestaucht und gestreckt
+	local anim = make("Frame", {
+		Name = "Anim", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.fromScale(0.5, 1), Size = UDim2.fromScale(1, 1),
 	}, holder)
-	round(base, r)
-	outline(base, 3)
-	local face = make("TextButton", {
-		Name = "Face",
-		AutoButtonColor = false,
-		Text = "",
-		BackgroundColor3 = C.white,
-		Size = UDim2.new(1, 0, 1, -depth),
-		ZIndex = 2,
-	}, holder)
-	round(face, r)
-	outline(face, 3, C.ink, Enum.ApplyStrokeMode.Border)
-	local grad = vgrad(face, cfg.pal)
-	gloss(face, r)
+	local imageMode = useAtlas and cfg.spr ~= nil and SPR[cfg.spr] ~= nil
+	local face, grad, base, art
+	if imageMode then
+		art = sprite(anim, cfg.spr, { z = 1 })
+		face = make("TextButton", {
+			Name = "Face", AutoButtonColor = false, Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 3,
+		}, anim)
+		if cfg.shine then
+			addShine(anim, type(cfg.shine) == "number" and cfg.shine or 0.22)
+		end
+	else
+		base = make("Frame", {
+			Name = "Base",
+			BackgroundColor3 = darker(cfg.pal[2], 0.5),
+			Position = UDim2.new(0, 0, 0, depth),
+			Size = UDim2.new(1, 0, 1, -depth),
+			ZIndex = 1,
+		}, anim)
+		round(base, r)
+		outline(base, 3)
+		face = make("TextButton", {
+			Name = "Face",
+			AutoButtonColor = false,
+			Text = "",
+			BackgroundColor3 = C.white,
+			Size = UDim2.new(1, 0, 1, -depth),
+			ZIndex = 2,
+		}, anim)
+		round(face, r)
+		outline(face, 3, C.ink, Enum.ApplyStrokeMode.Border)
+		grad = vgrad(face, cfg.pal)
+		gloss(face, r)
+	end
 	local label
 	if cfg.text then
-		label = text(face, cfg.text, cfg.textSize or 28, { stroke = cfg.textStroke or 3 })
+		label = text(face, cfg.text, cfg.textSize or 28, {
+			stroke = cfg.textStroke or 3, sz = imageMode and UDim2.new(1, 0, 1, -depth) or nil,
+		})
 	end
 
 	face.MouseEnter:Connect(function()
-		tween(sc, 0.12, { Scale = 1.06 })
+		tween(sc, 0.14, { Scale = 1.07 }, Enum.EasingStyle.Back)
+		anim.Rotation = -4
+		tween(anim, 0.5, { Rotation = 0 }, Enum.EasingStyle.Elastic)
+		playSound("hover")
 	end)
 	face.MouseLeave:Connect(function()
-		face.Position = UDim2.new()
-		tween(sc, 0.12, { Scale = 1 })
+		tween(sc, 0.14, { Scale = 1 })
+		tween(anim, 0.12, { Size = UDim2.fromScale(1, 1) })
 	end)
 	face.MouseButton1Down:Connect(function()
-		face.Position = UDim2.new(0, 0, 0, depth - 1)
-		tween(sc, 0.06, { Scale = 0.96 })
+		tween(anim, 0.07, { Size = UDim2.fromScale(1.08, 0.86) })
+		tween(sc, 0.07, { Scale = 0.98 })
 	end)
 	face.MouseButton1Up:Connect(function()
-		face.Position = UDim2.new()
-		tween(sc, 0.1, { Scale = 1.06 })
+		tween(anim, 0.45, { Size = UDim2.fromScale(1, 1) }, Enum.EasingStyle.Elastic)
+		tween(sc, 0.2, { Scale = 1.07 }, Enum.EasingStyle.Back)
 	end)
 	local function shake()
 		sc.Scale = 0.88
 		tween(sc, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
 	end
-	if cfg.onClick then
-		face.Activated:Connect(function()
-			cfg.onClick(shake)
-		end)
+	local function celebrate()
+		burst(face)
+		playSound("buy")
 	end
+	face.Activated:Connect(function()
+		if cfg.burst then
+			burst(face)
+		end
+		playSound("click")
+		if cfg.onClick then
+			cfg.onClick(shake, celebrate)
+		end
+	end)
 
-	local function recolor(pal)
-		grad.Color = ColorSequence.new(pal[1], pal[2])
-		base.BackgroundColor3 = darker(pal[2], 0.5)
+	-- recolor(pal, sprKey): Farbe wechseln (mit Bild: anderer Ausschnitt)
+	local function recolor(pal, sprKey)
+		if art then
+			local rct = sprKey and SPR[sprKey]
+			if rct then
+				art.ImageRectOffset = Vector2.new(rct[1], rct[2])
+				art.ImageRectSize = Vector2.new(rct[3], rct[4])
+			end
+		else
+			grad.Color = ColorSequence.new(pal[1], pal[2])
+			base.BackgroundColor3 = darker(pal[2], 0.5)
+		end
 	end
 	return holder, face, label, recolor
 end
 
 -- Schraubenmutter (Sechseck aus drei gedrehten Rechtecken), Währungs-Symbol
 local function hexNut(parent, size, fill, edge)
+	if useAtlas then
+		return sprite(parent, "nut", {
+			name = "Nut", sz = UDim2.fromOffset(size, size), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3,
+		})
+	end
 	local holder = make("Frame", {
 		Name = "Nut",
 		BackgroundTransparency = 1,
@@ -415,8 +598,9 @@ local gui = make("ScreenGui", {
 }, nil)
 
 gui.Parent = playerGui
-local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
-local rootScale = make("UIScale", {}, root)
+root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, gui)
+rootScale = make("UIScale", {}, root)
+fxLayer = make("Frame", { Name = "FX", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 30 }, root)
 local function rescale()
 	local cam = workspace.CurrentCamera
 	local vp = cam and cam.ViewportSize or Vector2.new(1920, 1080)
@@ -495,6 +679,10 @@ local moneyPlate = currencyPlate({
 local gearPlate = currencyPlate({
 	name = "Zahnraeder", order = 2, width = 170, rim = P.purple[2], subColor = Color3.fromRGB(226, 208, 255),
 	icon = function(p)
+		if useAtlas then
+			sprite(p, "gear", { sz = UDim2.fromOffset(46, 46), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3 })
+			return
+		end
 		local disc = make("Frame", {
 			BackgroundColor3 = C.white, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 			Size = UDim2.fromOffset(44, 44), ZIndex = 3,
@@ -529,15 +717,17 @@ end
 
 local tiles = {}
 local function tile(parent, cfg)
+	local big = useAtlas and SPR[cfg.key] ~= nil
 	local holder = make("Frame", {
 		Name = cfg.key,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(124, 116),
+		Size = UDim2.fromOffset(124, big and 108 or 116),
 		LayoutOrder = cfg.order,
 	}, parent)
+	local tsize = big and 100 or 84
 	local _, face = chunky(holder, {
-		Name = "Btn", Size = UDim2.fromOffset(84, 84), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
-		pal = cfg.pal, radius = 16, depth = 5,
+		Name = "Btn", Size = UDim2.fromOffset(tsize, tsize), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
+		pal = cfg.pal, radius = 16, depth = 5, spr = cfg.key, shine = big, burst = true,
 		onClick = function()
 			if UI.onOpen then
 				UI.onOpen(cfg.key)
@@ -545,27 +735,29 @@ local function tile(parent, cfg)
 			UI.toggleWindow(cfg.key)
 		end,
 	})
-	local img = ICON_IMAGES[cfg.key]
-	if img then
-		make("ImageLabel", {
-			BackgroundTransparency = 1, Image = img, Size = UDim2.fromScale(0.72, 0.72),
-			AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.46), ZIndex = 3,
-		}, face)
+	if big then
+		-- Beschriftung liegt auf dem unteren Teil des Knopfs
+		local lbl = text(face, cfg.label, 17, {
+			name = "Label", sz = UDim2.new(1.06, 0, 0, 20), pos = UDim2.new(0.5, 0, 0, 73), anchor = Vector2.new(0.5, 0),
+		})
+		fit(lbl, 17)
 	else
 		glyph(face, cfg.emoji, 46, { pos = UDim2.fromOffset(0, -2) })
+		local lbl = text(holder, cfg.label, 20, {
+			name = "Label", sz = UDim2.new(1, 0, 0, 24), pos = UDim2.fromOffset(0, 90),
+		})
+		fit(lbl, 20)
 	end
-	local lbl = text(holder, cfg.label, 20, {
-		name = "Label", sz = UDim2.new(1, 0, 0, 24), pos = UDim2.fromOffset(0, 90),
-	})
-	fit(lbl, 20)
 	local badge = make("Frame", {
 		Name = "Badge", BackgroundColor3 = C.white, Visible = false, AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 36, 0, 4), Size = UDim2.fromOffset(28, 28), ZIndex = 6,
+		Position = UDim2.new(0.5, big and 44 or 36, 0, big and 6 or 4), Size = UDim2.fromOffset(28, 28), ZIndex = 6,
 	}, holder)
 	round(badge, 999)
 	outline(badge, 3)
 	vgrad(badge, P.red)
 	local badgeText = text(badge, "!", 18, { stroke = 2, z = 7 })
+	local pulse = make("UIScale", {}, badge)
+	TweenService:Create(pulse, TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.18 }):Play()
 	tiles[cfg.key] = {
 		badge = function(v)
 			badge.Visible = v ~= nil and v ~= false and v ~= 0
@@ -598,18 +790,22 @@ do
 	round(luck, 28)
 	outline(luck, 3)
 	vgrad(luck, P.plate)
-	local clover = make("Frame", {
-		BackgroundColor3 = C.white, Position = UDim2.fromOffset(5, 5), Size = UDim2.fromOffset(46, 46), ZIndex = 3,
-	}, luck)
-	round(clover, 999)
-	outline(clover, 3)
-	vgrad(clover, P.green)
-	glyph(clover, "🍀", 28)
+	if useAtlas then
+		sprite(luck, "clover", { sz = UDim2.fromOffset(50, 50), pos = UDim2.fromOffset(4, 3), z = 3 })
+	else
+		local clover = make("Frame", {
+			BackgroundColor3 = C.white, Position = UDim2.fromOffset(5, 5), Size = UDim2.fromOffset(46, 46), ZIndex = 3,
+		}, luck)
+		round(clover, 999)
+		outline(clover, 3)
+		vgrad(clover, P.green)
+		glyph(clover, "🍀", 28)
+	end
 	luckLabel = text(luck, "+0% Glück", 24, { ax = AX.Left, sz = UDim2.new(1, -118, 1, 0), pos = UDim2.fromOffset(60, 0) })
 	fit(luckLabel, 24)
 	chunky(luck, {
 		Name = "Plus", Size = UDim2.fromOffset(42, 42), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, -2),
-		pal = P.gold, radius = 10, depth = 4, text = "+", textSize = 30, z = 4,
+		pal = P.gold, radius = 10, depth = 4, spr = "plus", text = (not useAtlas) and "+" or nil, textSize = 30, z = 4, burst = true,
 		onClick = function()
 			if UI.onOpen then
 				UI.onOpen("shop")
@@ -634,7 +830,7 @@ local dropFill, dropHint, autoRecolor
 do
 	local _, face = chunky(root, {
 		Name = "Drop", Size = UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24),
-		pal = P.gold, radius = 26, depth = 9,
+		pal = P.gold, radius = 26, depth = 9, spr = "drop", shine = 0.34, burst = true,
 		onClick = function()
 			if UI.onDrop then
 				UI.onDrop()
@@ -655,7 +851,7 @@ do
 
 	local _, aFace, _, recolor = chunky(root, {
 		Name = "Auto", Size = UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -170, 1, -30),
-		pal = P.gray, radius = 16, depth = 6, text = "AUTO", textSize = 26,
+		pal = P.gray, radius = 16, depth = 6, spr = "gray2", text = "AUTO", textSize = 26,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
 			if UI.onAutoToggle then
@@ -712,8 +908,9 @@ local function makeWindow(cfg)
 	local isOpen = false
 	local closeWin
 	chunky(head, {
-		Name = "Close", Size = UDim2.fromOffset(60, 46), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, -2),
-		pal = P.red, radius = 10, depth = 4, text = "X", textSize = 30, z = 5,
+		Name = "Close", Size = useAtlas and UDim2.fromOffset(54, 54) or UDim2.fromOffset(60, 46), AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -10, 0.5, -2),
+		pal = P.red, radius = 10, depth = 4, spr = "close", text = (not useAtlas) and "X" or nil, textSize = 30, z = 5,
 		onClick = function()
 			closeWin()
 		end,
@@ -812,7 +1009,7 @@ do
 	footerIncome = text(foot, "", 16, { ax = AX.Left, color = Color3.fromRGB(255, 230, 150), stroke = 2, sz = UDim2.fromOffset(190, 18), pos = UDim2.fromOffset(60, 34) })
 	local _, autoFace = chunky(foot, {
 		Name = "AutoUpgrade", Size = UDim2.fromOffset(210, 50), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, -2),
-		pal = P.gray, radius = 12, depth = 5, z = 4,
+		pal = P.gray, radius = 12, depth = 5, spr = "gray4", z = 4,
 		onClick = function()
 			if UI.onAutoUpgrade then
 				UI.onAutoUpgrade()
@@ -825,23 +1022,34 @@ end
 
 local function upgradeCard(u)
 	local card = make("Frame", { Name = u.id or "Card", BackgroundColor3 = C.white, LayoutOrder = u._order or 0 }, nil)
-	round(card, 12)
-	outline(card, 3)
+	if useAtlas then
+		card.BackgroundTransparency = 1
+		sprite(card, u.state == "locked" and "dark4" or (u.state == "max" and "gold4" or "green4"), { z = 1 })
+	else
+		round(card, 12)
+		outline(card, 3)
+	end
 	if u.state == "locked" then
-		vgrad(card, P.dark)
-		glyph(card, "🔒", 40, { sz = UDim2.fromOffset(64, 64), pos = UDim2.new(0, 10, 0.5, 0), anchor = Vector2.new(0, 0.5) })
+		if useAtlas then
+			sprite(card, "lock", { sz = UDim2.fromOffset(64, 64), pos = UDim2.new(0, 14, 0.5, -4), anchor = Vector2.new(0, 0.5), z = 3 })
+		else
+			vgrad(card, P.dark)
+			glyph(card, "🔒", 40, { sz = UDim2.fromOffset(64, 64), pos = UDim2.new(0, 10, 0.5, 0), anchor = Vector2.new(0, 0.5) })
+		end
 		text(card, u.lockedText or "Noch gesperrt", 22, {
 			ax = AX.Left, sz = UDim2.new(1, -92, 1, 0), pos = UDim2.fromOffset(84, 0), wrap = true, color = C.soft,
 		})
 		return card
 	end
-	vgrad(card, u.state == "max" and { Color3.fromRGB(96, 200, 90), Color3.fromRGB(30, 130, 50) } or P.green)
-	gloss(card, 12, 0.5)
+	if not useAtlas then
+		vgrad(card, u.state == "max" and { Color3.fromRGB(96, 200, 90), Color3.fromRGB(30, 130, 50) } or P.green)
+		gloss(card, 12, 0.5)
+	end
 
 	local ic = make("Frame", { BackgroundColor3 = C.white, Position = UDim2.fromOffset(14, 14), Size = UDim2.fromOffset(64, 64), ZIndex = 2 }, card)
 	round(ic, 12)
 	outline(ic, 3)
-	vgrad(ic, { Color3.fromRGB(46, 126, 42), Color3.fromRGB(24, 82, 30) })
+	vgrad(ic, u.state == "max" and { Color3.fromRGB(196, 128, 12), Color3.fromRGB(128, 76, 0) } or { Color3.fromRGB(46, 126, 42), Color3.fromRGB(24, 82, 30) })
 	glyph(ic, u.emoji or "⭐", 36)
 
 	local badge = make("Frame", {
@@ -860,20 +1068,26 @@ local function upgradeCard(u)
 
 	if u.state == "max" then
 		local tag = make("Frame", {
-			BackgroundColor3 = C.white, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(108, 46), ZIndex = 3,
+			BackgroundColor3 = C.white, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(108, 50), ZIndex = 3,
 		}, card)
-		round(tag, 12)
-		outline(tag, 3)
-		vgrad(tag, P.gold)
-		text(tag, "MAX", 26, { stroke = 3 })
+		if useAtlas then
+			tag.BackgroundTransparency = 1
+			sprite(tag, "green2", { z = 1 })
+		else
+			round(tag, 12)
+			outline(tag, 3)
+			vgrad(tag, P.gold)
+		end
+		text(tag, "MAX", 26, { stroke = 3, sz = UDim2.new(1, 0, 1, -5) })
 		return card
 	end
 
 	local _, face, _, recolor = chunky(card, {
 		Name = "Buy", Size = UDim2.fromOffset(108, 54), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, -2),
-		pal = P.gray, radius = 12, depth = 5, z = 4,
-		onClick = function(shake)
+		pal = P.gray, radius = 12, depth = 5, spr = "gray2", z = 4,
+		onClick = function(shake, celebrate)
 			if UI.state.money >= u.cost then
+				celebrate()
 				if UI.onUpgradeBuy then
 					UI.onUpgradeBuy(u.id)
 				end
@@ -892,7 +1106,8 @@ end
 
 local function refreshAffordability()
 	for _, ref in pairs(cardRefs) do
-		ref.recolor(UI.state.money >= ref.cost and P.gold or P.gray)
+		local ok = UI.state.money >= ref.cost
+		ref.recolor(ok and P.gold or P.gray, ok and "gold2" or "gray2")
 	end
 end
 
@@ -1010,7 +1225,7 @@ end
 
 function UI.setAuto(on)
 	UI.state.auto = on
-	autoRecolor(on and P.green or P.gray)
+	autoRecolor(on and P.green or P.gray, on and "green2" or "gray2")
 	UI._autoState.Text = on and "AN" or "AUS"
 end
 

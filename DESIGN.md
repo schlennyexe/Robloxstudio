@@ -16,7 +16,7 @@ Referenz-Stil: knallbunte Cartoon-Welt, fette Icon-Buttons, dicke schwarze Kontu
 |---|---|
 | Schrift | `FredokaOne`, weiß, schwarze `UIStroke` 2–4 px |
 | Kontur | alle Flächen: schwarz `#0A0A12`, 3–4 px |
-| Knöpfe | Verlauf oben hell → unten satt, weißer Glanz auf der oberen Hälfte, dunkle Unterkante (3D), Hover ×1,06, Klick ×0,96 |
+| Knöpfe | Verlauf oben hell → unten satt, weißer Glanz oben, dunkle Unterkante (3D), Hover wackelt, Klick quetscht und federt zurück |
 | Fenster | Header in Blau mit Glanz und Diagonalstreifen, roter X-Knopf, dunkle Karten |
 | Karten | aktiv = grün, gesperrt = anthrazit mit Schloss, Preis gold (bezahlbar) oder grau |
 | Meldungen | dunkles Banner mit Diagonalstreifen, Name in Seltenheitsfarbe, Kosmisch = Regenbogen |
@@ -62,8 +62,30 @@ UI.onDrop = function() end          -- ebenso: onAutoToggle, onUpgradeBuy(id), o
 
 Danach `DEMO = false` setzen.
 
+## Glänzende Knöpfe (Bild-Atlas)
+
+Alle Knöpfe, Karten und Symbole liegen als **eine** Bilddatei vor: `assets/ui/atlas.png` (1024 x 1024).
+Ohne dieses Bild zeichnet das Skript die Knöpfe selbst (schlichter). Mit Bild sehen sie aus wie Spiel-Grafik.
+
+1. Studio: **Ansicht › Asset-Manager**, Bereich **Bilder** › **Massen-Import** › `atlas.png` wählen.
+2. Nach dem Import Rechtsklick auf das Bild › **Asset-ID kopieren**.
+3. Im LocalScript oben `local ATLAS_ID = "123456789"` (die kopierte Zahl) eintragen.
+4. Play. Falls die Knöpfe weiß bleiben, ist das Bild noch in der Prüfung oder die ID falsch.
+
+Die Bilder werden von `tools/make_ui_atlas.py` gezeichnet (Vektorgrafik, gerendert mit Chromium). Farben, Icons und
+Größen lassen sich dort ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
+Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
+
+## Animationen
+
+- Darüberfahren: Knopf wächst leicht und wackelt kurz.
+- Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
+- Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch.
+- Ruhe: alle paar Sekunden läuft ein Glanzstreifen über Kacheln und DROP.
+- Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
+
 ## Noch offen
 
-- Icons sind Emojis. Eigene Icon-Bilder hochladen und in `ICON_IMAGES` eintragen.
+- Die kleinen Upgrade-Symbole in den Karten sind noch Emojis.
 - Shop-, Index-, Rebirth-, Aufgaben- und Forschungsfenster sind Platzhalter im neuen Look.
 - Welt und Licht (Himmel, Bloom, Farbkorrektur, Terrain-Farben) folgen als nächster Schritt.
