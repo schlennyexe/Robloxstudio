@@ -1120,25 +1120,164 @@ local function refreshAffordability()
 	end
 end
 
--- ---------- Platzhalter-Fenster ----------
+-- ---------- Listen-Fenster (Aufgaben, Forschung, Shop, Index, Rebirth) ----------
+local rowHosts, rowCols = {}, {}
+
+-- rows: { { id, emoji | spr | dot, title, sub, progress, barColor, card, btn, btnSpr, btnPal } }
+local function buildRows(key, rows)
+	local host = rowHosts[key]
+	local cols = rowCols[key]
+	for _, ch in ipairs(host:GetChildren()) do
+		if ch:IsA("GuiObject") then
+			ch:Destroy()
+		end
+	end
+	local textW = cols == 1 and 250 or 130
+	for i, r in ipairs(rows) do
+		local card = make("Frame", { Name = "Row", BackgroundColor3 = C.white, LayoutOrder = i }, host)
+		local sprKey = r.card or "green4"
+		if useAtlas then
+			card.BackgroundTransparency = 1
+			sprite(card, sprKey, { z = 1 })
+		else
+			round(card, 12)
+			outline(card, 3)
+			vgrad(card, sprKey == "gold4" and P.gold or (sprKey == "dark4" and P.dark or P.green))
+			gloss(card, 12, 0.45)
+		end
+		local ic = make("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 12), Size = UDim2.fromOffset(64, 64), ZIndex = 3 }, card)
+		if r.dot then
+			ic.BackgroundTransparency = 0
+			ic.BackgroundColor3 = r.dot
+			round(ic, 999)
+			outline(ic, 4)
+			text(ic, r.title:sub(1, 1), 34, { stroke = 3 })
+		elseif useAtlas and r.spr and SPR[r.spr] then
+			sprite(ic, r.spr, { z = 3 })
+		else
+			glyph(ic, r.emoji or "⭐", 44)
+		end
+		local title = text(card, r.title, 22, { ax = AX.Left, sz = UDim2.new(1, -textW, 0, 28), pos = UDim2.fromOffset(88, 8) })
+		fit(title, 22)
+		local sub = text(card, r.sub or "", 16, { ax = AX.Left, sz = UDim2.new(1, -textW, 0, 22), pos = UDim2.fromOffset(88, 36), stroke = 2, color = C.soft })
+		fit(sub, 16)
+		if r.progress then
+			local track = make("Frame", {
+				BackgroundColor3 = C.ink, BackgroundTransparency = 0.3, Position = UDim2.new(0, 88, 1, -26), Size = UDim2.new(1, -textW, 0, 12), ZIndex = 3,
+			}, card)
+			round(track, 999)
+			local fill = make("Frame", {
+				BackgroundColor3 = r.barColor or Color3.fromRGB(80, 230, 255), Size = UDim2.fromScale(math.clamp(r.progress, 0, 1), 1), ZIndex = 4,
+			}, track)
+			round(fill, 999)
+		end
+		if r.btn then
+			chunky(card, {
+				Name = "Btn", Size = UDim2.fromOffset(124, 54), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, -2),
+				pal = r.btnPal or P.gold, radius = 12, depth = 5, spr = r.btnSpr or "gold2", text = r.btn, textSize = 20, z = 4, burst = true,
+				onClick = function()
+					if UI.onRowAction then
+						UI.onRowAction(key, r.id)
+					end
+				end,
+			})
+		end
+	end
+end
+
+function UI.setRows(key, rows)
+	if rowHosts[key] then
+		buildRows(key, rows)
+	end
+end
+
 do
 	local defs = {
-		{ key = "aufgaben", title = "Aufgaben", emoji = "📋", pal = P.green },
-		{ key = "forschung", title = "Forschung", emoji = "🔬", pal = P.purple },
-		{ key = "shop", title = "Shop", emoji = "🛒", pal = P.red },
-		{ key = "rebirth", title = "Rebirth", emoji = "🔄", pal = P.pink },
-		{ key = "index", title = "Index", emoji = "📖", pal = P.blue },
+		{ key = "aufgaben", title = "Aufgaben", emoji = "📋", pal = P.green, cols = 1, rows = {
+			{ id = "q1", emoji = "🎯", title = "10 Kerne droppen", sub = "Belohnung: 250 Schrauben", progress = 0.6, btn = "6 / 10", btnSpr = "gray2", btnPal = P.gray },
+			{ id = "q2", emoji = "🤖", title = "Einen Bot bauen", sub = "Belohnung: 1 Glückstrank", progress = 1, btn = "Abholen", btnSpr = "green2", btnPal = P.green },
+			{ id = "q3", emoji = "⬆️", title = "3 Upgrades kaufen", sub = "Belohnung: 1 Zahnrad", progress = 0.33, btn = "1 / 3", btnSpr = "gray2", btnPal = P.gray },
+		} },
+		{ key = "forschung", title = "Forschung", emoji = "🔬", pal = P.purple, cols = 1, rows = {
+			{ id = "f1", emoji = "💻", title = "Auto-Drop-Skript", sub = "Programmieren 40 · DROP läuft von allein", progress = 0.25, btn = "Start" },
+			{ id = "f2", emoji = "🍀", title = "Glücks-Algorithmus", sub = "Programmieren 60, Labor 30 · +3 Glück", progress = 0, btn = "Start" },
+			{ id = "f3", emoji = "⚡", title = "Energie-Zelle", sub = "Labor 80, Kraftwerk 40 · Einkommen +15 %", progress = 0.7, btn = "Start" },
+			{ id = "f4", emoji = "🏭", title = "Werkhalle", sub = "Bauen 60, Kraftwerk 30 · +1 Arbeitsplatz", progress = 0, btn = "Start" },
+		} },
+		{ key = "shop", title = "Shop", emoji = "🛒", pal = P.red, cols = 2, rows = {
+			{ id = "doppelt", emoji = "💰", title = "2× Schrauben", sub = "Doppeltes Einkommen", card = "gold4", btn = "R$ 199", btnSpr = "green2", btnPal = P.green },
+			{ id = "vip", emoji = "⭐", title = "VIP", sub = "+1 Kern pro Drop", card = "gold4", btn = "R$ 299", btnSpr = "green2", btnPal = P.green },
+			{ id = "glueck", emoji = "🍀", title = "Glückspass", sub = "+10 Glücksstufen", card = "gold4", btn = "R$ 249", btnSpr = "green2", btnPal = P.green },
+			{ id = "plaetze", emoji = "🏭", title = "Große Werkstatt", sub = "+5 Werkstatt-Plätze", card = "gold4", btn = "R$ 149", btnSpr = "green2", btnPal = P.green },
+			{ id = "t1", spr = "potion_g", title = "Glückstrank", sub = "+12 Glück, 5 Min", btn = "R$ 25", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "t2", spr = "potion_y", title = "Schraubentrank", sub = "Einkommen ×2, 5 Min", btn = "R$ 45", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "t3", spr = "potion_p", title = "Turbotrank", sub = "40 % schneller droppen", btn = "R$ 35", btnSpr = "blue2", btnPal = P.blue },
+		} },
+		{ key = "index", title = "Index", emoji = "📖", pal = P.blue, cols = 2, rows = (function()
+			local out = {}
+			for i, r in ipairs(RARITY) do
+				out[i] = { id = r.name, dot = r.color, title = r.name, sub = string.format("%d / 9 Bots", math.max(0, 9 - i)), progress = math.max(0, 9 - i) / 9, barColor = r.color, card = "dark4" }
+			end
+			return out
+		end)() },
 	}
 	for _, d in ipairs(defs) do
-		local w = makeWindow({ key = d.key, title = d.title, emoji = d.emoji, pal = d.pal, iconPal = d.pal, width = 640, height = 420 })
-		if useAtlas and SPR[d.key] then
-			sprite(w.body, d.key, { sz = UDim2.fromOffset(120, 120), anchor = Vector2.new(0.5, 0), pos = UDim2.new(0.5, 0, 0, 30), z = 3 })
-		else
-			glyph(w.body, d.emoji, 90, { sz = UDim2.new(1, 0, 0, 110), pos = UDim2.fromOffset(0, 40) })
-		end
-		text(w.body, "Dieses Fenster bekommt den neuen Look als Nächstes.", 24, {
-			sz = UDim2.new(1, -60, 0, 60), pos = UDim2.fromOffset(30, 170), wrap = true, color = C.soft,
-		})
+		local w = makeWindow({ key = d.key, title = d.title, emoji = d.emoji, pal = d.pal, iconPal = d.pal, width = 780, height = 500 })
+		local scroll = make("ScrollingFrame", {
+			Name = "Rows", BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -28, 1, -18),
+			CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8,
+			ScrollBarImageColor3 = Color3.fromRGB(120, 126, 150), ScrollingDirection = Enum.ScrollingDirection.Y,
+		}, w.body)
+		make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 12) }, scroll)
+		make("UIGridLayout", {
+			CellSize = d.cols == 1 and UDim2.new(1, 0, 0, 88) or UDim2.new(0.5, -6, 0, 88),
+			CellPadding = UDim2.fromOffset(10, 12), SortOrder = Enum.SortOrder.LayoutOrder,
+		}, scroll)
+		rowHosts[d.key], rowCols[d.key] = scroll, d.cols
+		buildRows(d.key, d.rows)
+	end
+end
+
+-- ---------- Rebirth-Fenster ----------
+do
+	local w = makeWindow({ key = "rebirth", title = "Rebirth", emoji = "🔄", pal = P.pink, iconPal = P.pink, width = 780, height = 500 })
+	local big = make("Frame", { Name = "Panel", BackgroundColor3 = C.white, Position = UDim2.fromOffset(20, 14), Size = UDim2.new(1, -40, 0, 250) }, w.body)
+	if useAtlas then
+		big.BackgroundTransparency = 1
+		sprite(big, "dark4", { z = 1 })
+	else
+		round(big, 14)
+		outline(big, 3)
+		vgrad(big, P.dark)
+	end
+	if useAtlas and SPR.rebirth then
+		sprite(big, "rebirth", { sz = UDim2.fromOffset(150, 150), pos = UDim2.fromOffset(28, 34), z = 3 })
+	else
+		glyph(big, "🔄", 90, { sz = UDim2.fromOffset(150, 150), pos = UDim2.fromOffset(28, 34) })
+	end
+	text(big, "Rebirth 3", 38, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 46), pos = UDim2.fromOffset(200, 22) })
+	text(big, "Ziel: 480 M Schrauben", 22, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 28), pos = UDim2.fromOffset(200, 72), stroke = 2, color = C.soft })
+	local track = make("Frame", {
+		BackgroundColor3 = C.ink, BackgroundTransparency = 0.3, Position = UDim2.fromOffset(200, 112), Size = UDim2.new(1, -240, 0, 22), ZIndex = 3,
+	}, big)
+	round(track, 999)
+	outline(track, 2)
+	local fill = make("Frame", { BackgroundColor3 = Color3.fromRGB(255, 120, 190), Size = UDim2.fromScale(0.62, 1), ZIndex = 4 }, track)
+	round(fill, 999)
+	text(track, "62 %", 16, { stroke = 2, z = 5 })
+	text(big, "Du bekommst  +12 Zahnräder  und  ×1,8 Einkommen", 20, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 26), pos = UDim2.fromOffset(200, 146), stroke = 2 })
+	chunky(big, {
+		Name = "Rebirth", Size = UDim2.fromOffset(250, 66), AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 200, 1, -18),
+		pal = P.pink, radius = 16, depth = 6, spr = "gold2", text = "REBIRTH", textSize = 30, z = 4, burst = true,
+		onClick = function()
+			if UI.onRebirth then
+				UI.onRebirth()
+			end
+		end,
+	})
+	local perks = { "Zahnräder kaufen dauerhafte Forschung", "Start mit mehr Reihen und Werkstatt-Plätzen", "Dein Index und alle Passes bleiben" }
+	for i, t in ipairs(perks) do
+		text(w.body, "•  " .. t, 20, { ax = AX.Left, sz = UDim2.new(1, -60, 0, 28), pos = UDim2.fromOffset(34, 282 + (i - 1) * 32), stroke = 2, color = C.soft })
 	end
 end
 
@@ -1202,6 +1341,8 @@ UI.onAutoToggle = nil -- function(an)
 UI.onAutoUpgrade = nil -- function()
 UI.onUpgradeBuy = nil -- function(id)
 UI.onOpen = nil -- function(key)
+UI.onRowAction = nil -- function(fensterKey, zeilenId)
+UI.onRebirth = nil -- function()
 
 function UI.setSchrauben(n, proSek)
 	local up = n > UI.state.money

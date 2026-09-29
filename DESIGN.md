@@ -72,7 +72,7 @@ Ohne dieses Bild zeichnet das Skript die Knöpfe selbst (schlichter). Mit Bild s
 3. Im LocalScript oben `local ATLAS_ID = "123456789"` (die kopierte Zahl) eintragen.
 4. Play. Falls die Knöpfe weiß bleiben, ist das Bild noch in der Prüfung oder die ID falsch.
 
-Die Bilder werden von `tools/make_ui_atlas.py` gezeichnet (Vektorgrafik, gerendert mit Chromium). Farben, Icons und
+Die Bilder werden von `tools/make_ui_atlas.py` erzeugt: Platten als Vektorgrafik, Icons als 3D-Modelle (three.js, `tools/render3d`, Kontur in `tools/icons3d.py`). Einmalig `cd tools/render3d && npm install`. Farben, Icons und
 Größen lassen sich dort ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
 Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
 
@@ -83,8 +83,21 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 - Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch.
 - Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
 
+## Welt und Licht (WorldLook)
+
+`src/ServerScriptService/WorldLook.server.lua` als **Script** in `ServerScriptService` einfügen. Es setzt beim Start warmes
+Tageslicht, blauen Dunst, Bloom, kräftigere Farben, Cartoon-Farben für Terrain und Baseplate und stellt Deko
+(Bäume, Felsen, Pilze, Blumen) rund um die Mitte. `DEKO = false` schaltet die Deko ab.
+Für die schönsten Schatten in Studio: `Lighting > Technology` auf `Future` stellen.
+
+## Fenster
+
+Aufgaben, Forschung, Shop, Index und Rebirth haben jetzt eigene Layouts mit Beispieldaten
+(Listen mit Fortschrittsbalken, Preis-Buttons, Rebirth-Fortschritt). Befüllen über
+`UI.setRows("aufgaben", rows)`, `UI.onRowAction = function(fenster, id) end`, `UI.onRebirth = function() end`.
+
 ## Noch offen
 
 - Die kleinen Upgrade-Symbole in den Karten sind noch Emojis.
-- Shop-, Index-, Rebirth-, Aufgaben- und Forschungsfenster sind Platzhalter im neuen Look.
-- Welt und Licht (Himmel, Bloom, Farbkorrektur, Terrain-Farben) folgen als nächster Schritt.
+- Die Werte in den Fenstern (Aufgaben, Forschung, Shop-Preise für Tränke) sind Beispiele.
+- Eigene Welt-Modelle (Insel, Wege, Brett-Optik) folgen; bisher gibt es nur Licht, Farben und Deko.
