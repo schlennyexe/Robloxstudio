@@ -86,12 +86,18 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 Banner (`UI.banner({ bot = "bot_samurai", ... })`). Für eigene Stellen: `shared.DropABotUI.botSprite(parent, "bot_katze", { sz = UDim2.fromOffset(96, 96) })`.
 Weitere Bots: Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.
 
+## Größe
+
+`UI_SCALE` oben im Skript (Standard 1.15) macht die ganze Oberfläche größer oder kleiner. DROP und AUTO behalten
+ihre Größe (`k()` rechnet sie um). Alles andere wächst mit.
+
 ## Animationen
 
 - Darüberfahren: Knopf wächst leicht und wackelt kurz.
 - Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
-- Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`), der Orb schwebt leicht.
-- AUTO: Zahnrad-Symbol, dreht sich, solange Auto an ist.
+- Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`).
+- AUTO: kleines Zahnrad-Symbol mit Beschriftung. An = bunt mit grüner Schrift, Aus = grau. Es dreht sich nicht.
+- DROP: großer Arcade-Druckknopf mit Metallsockel und Pfeil nach unten.
 - Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
 
 ## Welt und Licht (WorldLook)
@@ -109,6 +115,5 @@ Aufgaben, Forschung, Shop, Index und Rebirth haben jetzt eigene Layouts mit Beis
 
 ## Noch offen
 
-- Die kleinen Upgrade-Symbole in den Karten sind noch Emojis.
 - Die Werte in den Fenstern (Aufgaben, Forschung, Shop-Preise für Tränke) sind Beispiele.
 - Eigene Welt-Modelle (Insel, Wege, Brett-Optik) folgen; bisher gibt es nur Licht, Farben und Deko.

@@ -18,6 +18,12 @@ print("[DropABotUI] Skript gestartet")
 
 local DEMO = true
 
+-- Größe der ganzen Oberfläche (1 = klein, 1.15 = etwas größer). DROP und AUTO behalten ihre Größe, alles andere wächst mit.
+local UI_SCALE = 1.15
+local function k(n)   -- rechnet eine Größe für DROP/AUTO so um, dass sie vom UI_SCALE unberührt bleibt
+	return math.floor(n / UI_SCALE + 0.5)
+end
+
 -- BILD-ATLAS: die Datei assets/ui/atlas.png (eine einzige PNG) in Studio hochladen und die ID hier eintragen.
 -- Es reicht die Zahl, z.B. "123456789". Leer lassen = das Skript zeichnet die Knöpfe selbst (schlichter).
 local ATLAS_ID = ""
@@ -703,7 +709,7 @@ fxLayer = make("Frame", { Name = "FX", BackgroundTransparency = 1, Size = UDim2.
 local function rescale()
 	local cam = workspace.CurrentCamera
 	local vp = cam and cam.ViewportSize or Vector2.new(1920, 1080)
-	local s = math.clamp(vp.Y / 900, 0.6, 1.25)
+	local s = math.clamp(vp.Y / 900, 0.6, 1.25) * UI_SCALE
 	rootScale.Scale = s
 	root.Size = UDim2.fromScale(1 / s, 1 / s)
 end
@@ -942,9 +948,9 @@ make("UIListLayout", {
 local dropFill, dropHint, autoRecolor, dropFace
 do
 	local _, face = chunky(root, {
-		Name = "Drop", Size = useAtlas and UDim2.fromOffset(184, 184) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
-		Position = useAtlas and UDim2.new(0.5, 0, 1, -40) or UDim2.new(0.5, 0, 1, -24),
-		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true, bob = useAtlas,
+		Name = "Drop", Size = useAtlas and UDim2.fromOffset(k(184), k(184)) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
+		Position = useAtlas and UDim2.new(0.5, 0, 1, -k(40)) or UDim2.new(0.5, 0, 1, -24),
+		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
 		onClick = function()
 			if UI.onDrop then
 				UI.onDrop()
@@ -953,10 +959,10 @@ do
 	})
 	dropFace = face
 	if useAtlas then
-		text(face, "DROP", 46, { sz = UDim2.new(1.3, 0, 0, 52), pos = UDim2.new(0.5, 0, 0.84, 0), anchor = Vector2.new(0.5, 0.5), stroke = 5 })
+		text(face, "DROP", k(46), { sz = UDim2.new(1.3, 0, 0, k(52)), pos = UDim2.new(0.5, 0, 0.86, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
 		local track = make("Frame", {
 			Name = "Track", BackgroundColor3 = C.ink, BackgroundTransparency = 0.25,
-			AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(150, 14),
+			AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -k(18)), Size = UDim2.fromOffset(k(150), k(14)),
 		}, root)
 		round(track, 999)
 		outline(track, 2)
@@ -979,7 +985,7 @@ do
 	end
 
 	local _, aFace, _, recolor = chunky(root, {
-		Name = "Auto", Size = useAtlas and UDim2.fromOffset(92, 92) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -120 or -170, 1, useAtlas and -50 or -30),
+		Name = "Auto", Size = useAtlas and UDim2.fromOffset(k(64), k(64)) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -(k(184) / 2 + k(16)) or -170, 1, useAtlas and -k(44) or -30),
 		pal = P.gray, radius = 16, depth = 6, spr = useAtlas and "gear" or "gray2", text = (not useAtlas) and "AUTO" or nil, textSize = 26, burst = useAtlas,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
@@ -990,23 +996,14 @@ do
 	})
 	autoRecolor = recolor
 	if useAtlas then
-		-- Zahnrad-Symbol: dreht sich, solange Auto an ist
+		-- Zahnrad-Symbol, dreht sich nicht. An = bunt und grüne Schrift, Aus = grau
 		local art = aFace.Parent and aFace.Parent:FindFirstChild("Art")
-		local aLabel = text(aFace, "AUTO AUS", 17, { sz = UDim2.new(1.2, 0, 0, 22), pos = UDim2.new(0.5, 0, 0.9, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
-		local spin
+		local aLabel = text(aFace, "AUTO AUS", k(15), { sz = UDim2.new(1.4, 0, 0, k(20)), pos = UDim2.new(0.5, 0, 0.92, 0), anchor = Vector2.new(0.5, 0.5), stroke = 3 })
 		UI._autoSet = function(on)
 			aLabel.Text = on and "AUTO AN" or "AUTO AUS"
-			if spin then
-				spin:Cancel()
-				spin = nil
-			end
+			aLabel.TextColor3 = on and Color3.fromRGB(130, 255, 130) or C.white
 			if art then
-				art.Rotation = 0
 				art.ImageColor3 = on and C.white or Color3.fromRGB(150, 150, 165)
-				if on then
-					spin = TweenService:Create(art, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1), { Rotation = 360 })
-					spin:Play()
-				end
 			end
 		end
 	else
@@ -1018,7 +1015,7 @@ do
 
 	if useAtlas and SPR.hand then
 		dropHint = sprite(root, "hand", {
-			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -230), z = 5,
+			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -(k(40) + k(184) + 6)), z = 5,
 		})
 	else
 		dropHint = glyph(root, "👇", 64, {
@@ -1027,7 +1024,7 @@ do
 	end
 	dropHint.Visible = false
 	TweenService:Create(dropHint, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-		Position = UDim2.new(0.5, 0, 1, useAtlas and -248 or -146),
+		Position = UDim2.new(0.5, 0, 1, useAtlas and -(k(40) + k(184) + 24) or -146),
 	}):Play()
 end
 
@@ -1313,11 +1310,15 @@ local function buildRows(key, rows)
 			vgrad(card, sprKey == "gold4" and P.gold or (sprKey == "dark4" and P.dark or P.green))
 			gloss(card, 12, 0.45)
 		end
-		local ic = make("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 12), Size = UDim2.fromOffset(64, 64), ZIndex = 3 }, card)
+		-- Karten ohne Button: alles bleibt innerhalb der Innenfläche der Platte (Rand oben, unten und seitlich frei)
+		local compact = not r.btn
+		local icS = compact and 60 or 64
+		local tx = compact and 86 or 88
+		local ic = make("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(compact and 17 or 14, compact and 20 or 12), Size = UDim2.fromOffset(icS, icS), ZIndex = 3 }, card)
 		if r.bot and useBots and BSPR[r.bot] then
-			botSprite(ic, r.bot, { sz = UDim2.fromOffset(72, 72), pos = UDim2.fromOffset(-4, -4), z = 3 })
+			botSprite(ic, r.bot, { sz = UDim2.fromOffset(icS + 4, icS + 4), pos = UDim2.fromOffset(-2, -2), z = 3 })
 		elseif r.spr and useAtlas and SPR[r.spr] then
-			sprite(ic, r.spr, { sz = UDim2.fromOffset(64, 64), z = 3 })
+			sprite(ic, r.spr, { sz = UDim2.fromOffset(icS, icS), z = 3 })
 		elseif r.dot then
 			ic.BackgroundTransparency = 0
 			ic.BackgroundColor3 = r.dot
@@ -1327,13 +1328,21 @@ local function buildRows(key, rows)
 		else
 			glyph(ic, r.emoji or "⭐", 44)
 		end
-		local title = text(card, r.title, 22, { ax = AX.Left, sz = UDim2.new(1, -textW, 0, 28), pos = UDim2.fromOffset(88, 8) })
-		fit(title, 22)
-		local sub = text(card, r.sub or "", 16, { ax = AX.Left, sz = UDim2.new(1, -textW, 0, 22), pos = UDim2.fromOffset(88, 36), stroke = 2, color = C.soft })
-		fit(sub, 16)
+		local title = text(card, r.title, compact and 20 or 22, {
+			ax = AX.Left, sz = UDim2.new(1, -(compact and tx + 24 or textW), 0, compact and 22 or 28),
+			pos = UDim2.fromOffset(tx, compact and (r.progress and 14 or 25) or 8),
+		})
+		fit(title, compact and 20 or 22)
+		local sub = text(card, r.sub or "", compact and 15 or 16, {
+			ax = AX.Left, sz = UDim2.new(1, -(compact and tx + 24 or textW), 0, compact and 18 or 22),
+			pos = UDim2.fromOffset(tx, compact and (r.progress and 37 or 48) or 36), stroke = 2, color = C.soft,
+		})
+		fit(sub, compact and 15 or 16)
 		if r.progress then
 			local track = make("Frame", {
-				BackgroundColor3 = C.ink, BackgroundTransparency = 0.3, Position = UDim2.new(0, 88, 1, -26), Size = UDim2.new(1, -textW, 0, 12), ZIndex = 3,
+				BackgroundColor3 = C.ink, BackgroundTransparency = 0.3,
+				Position = compact and UDim2.new(0, tx, 0, 62) or UDim2.new(0, 88, 1, -26),
+				Size = UDim2.new(1, -(compact and tx + 24 or textW), 0, compact and 9 or 12), ZIndex = 3,
 			}, card)
 			round(track, 999)
 			local fill = make("Frame", {
@@ -1417,7 +1426,7 @@ do
 		}, w.body)
 		make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 12) }, scroll)
 		make("UIGridLayout", {
-			CellSize = d.cols == 1 and UDim2.new(1, 0, 0, 88) or UDim2.new(0.5, -6, 0, 88),
+			CellSize = d.cols == 1 and UDim2.new(1, 0, 0, 88) or UDim2.new(0.5, -6, 0, (d.key == "index" or d.key == "bots") and 100 or 88),
 			CellPadding = UDim2.fromOffset(10, 12), SortOrder = Enum.SortOrder.LayoutOrder,
 		}, scroll)
 		rowHosts[d.key], rowCols[d.key] = scroll, d.cols
@@ -1428,15 +1437,10 @@ end
 -- ---------- Rebirth-Fenster ----------
 do
 	local w = makeWindow({ key = "rebirth", title = "Rebirth", emoji = "🔄", pal = P.pink, iconPal = P.pink, width = 780, height = 500 })
-	local big = make("Frame", { Name = "Panel", BackgroundColor3 = C.white, Position = UDim2.fromOffset(20, 14), Size = UDim2.new(1, -40, 0, 250) }, w.body)
-	if useAtlas then
-		big.BackgroundTransparency = 1
-		sprite(big, "dark4", { z = 1 })
-	else
-		round(big, 14)
-		outline(big, 3)
-		vgrad(big, P.dark)
-	end
+	local big = make("Frame", { Name = "Panel", BackgroundColor3 = C.white, Position = UDim2.fromOffset(20, 14), Size = UDim2.new(1, -40, 0, 274) }, w.body)
+	round(big, 16)
+	outline(big, 4)
+	vgrad(big, P.dark)
 	if useAtlas and SPR.rebirth then
 		sprite(big, "rebirth", { sz = UDim2.fromOffset(150, 150), pos = UDim2.fromOffset(28, 34), z = 3 })
 	else
@@ -1445,16 +1449,16 @@ do
 	text(big, "Rebirth 3", 38, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 46), pos = UDim2.fromOffset(200, 22) })
 	text(big, "Ziel: 480 M Schrauben", 22, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 28), pos = UDim2.fromOffset(200, 72), stroke = 2, color = C.soft })
 	local track = make("Frame", {
-		BackgroundColor3 = C.ink, BackgroundTransparency = 0.3, Position = UDim2.fromOffset(200, 112), Size = UDim2.new(1, -240, 0, 22), ZIndex = 3,
+		BackgroundColor3 = C.ink, BackgroundTransparency = 0.3, Position = UDim2.fromOffset(200, 108), Size = UDim2.new(1, -240, 0, 22), ZIndex = 3,
 	}, big)
 	round(track, 999)
 	outline(track, 2)
 	local fill = make("Frame", { BackgroundColor3 = Color3.fromRGB(255, 120, 190), Size = UDim2.fromScale(0.62, 1), ZIndex = 4 }, track)
 	round(fill, 999)
 	text(track, "62 %", 16, { stroke = 2, z = 5 })
-	text(big, "Du bekommst  +12 Zahnräder  und  ×1,8 Einkommen", 20, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 26), pos = UDim2.fromOffset(200, 146), stroke = 2 })
+	text(big, "Du bekommst  +12 Zahnräder  und  ×1,8 Einkommen", 20, { ax = AX.Left, sz = UDim2.new(1, -220, 0, 26), pos = UDim2.fromOffset(200, 140), stroke = 2 })
 	chunky(big, {
-		Name = "Rebirth", Size = UDim2.fromOffset(250, 66), AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 200, 1, -18),
+		Name = "Rebirth", Size = UDim2.fromOffset(250, 66), AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 200, 1, -26),
 		pal = P.pink, radius = 16, depth = 6, spr = "gold2", text = "REBIRTH", textSize = 30, z = 4, burst = true,
 		onClick = function()
 			if UI.onRebirth then
@@ -1464,7 +1468,7 @@ do
 	})
 	local perks = { "Zahnräder kaufen dauerhafte Forschung", "Start mit mehr Reihen und Werkstatt-Plätzen", "Dein Index und alle Passes bleiben" }
 	for i, t in ipairs(perks) do
-		text(w.body, "•  " .. t, 20, { ax = AX.Left, sz = UDim2.new(1, -60, 0, 28), pos = UDim2.fromOffset(34, 282 + (i - 1) * 32), stroke = 2, color = C.soft })
+		text(w.body, "•  " .. t, 20, { ax = AX.Left, sz = UDim2.new(1, -60, 0, 28), pos = UDim2.fromOffset(34, 308 + (i - 1) * 32), stroke = 2, color = C.soft })
 	end
 end
 

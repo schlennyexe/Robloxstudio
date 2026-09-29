@@ -274,7 +274,7 @@ ICONS3D = {
     "clover": (896, 256, 128, "#0d3a14"),
     "lock": (576, 448, 128, "#4a2c00"),
     "star": (832, 448, 128, "#5a3200"),
-    "drop": (0, 448, 192, "#08425a"),
+    "drop": (0, 448, 192, "#4a1a00"),
     "potion_g": (192, 448, 128, "#0d3a14"),
     "potion_y": (320, 448, 128, "#5a3200"),
     "potion_p": (448, 448, 128, "#3a1060"),
@@ -328,7 +328,7 @@ def main():
     sys.path.insert(0, os.path.dirname(__file__))
     import icons3d
     LABELED = {"upgrades", "aufgaben", "forschung", "shop", "rebirth", "index", "teleport", "drop"}   # unten bleibt Platz für die Beschriftung
-    ims = icons3d.render({n: (((v[3], 0.88, 0.1) if n == "drop" else (v[3], 0.75, 0.17)) if n in LABELED else v[3]) for n, v in ICONS3D.items()}, 256, fill=0.87)
+    ims = icons3d.render({n: (((v[3], 0.84, 0.1) if n == "drop" else (v[3], 0.75, 0.17)) if n in LABELED else v[3]) for n, v in ICONS3D.items()}, 256, fill=0.87)
     for n, (x, y, sz, _) in ICONS3D.items():
         atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
