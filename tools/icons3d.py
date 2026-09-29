@@ -28,7 +28,7 @@ def outline(im, color, width):
     return under
 
 def render(names, size, fill=0.86, ol_width=None):
-    """names: {name: outline-farbe}. Liefert {name: RGBA-Image size x size} mit Kontur."""
+    """names: {name: Konturfarbe | (Konturfarbe, fill, yShift)}. Liefert {name: RGBA-Image size x size} mit Kontur."""
     srv = _serve(); out = {}
     port = srv.server_address[1]
     with sync_playwright() as p:
@@ -38,8 +38,9 @@ def render(names, size, fill=0.86, ol_width=None):
         pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
         pg.goto(f"http://127.0.0.1:{port}/icons.html")
         pg.wait_for_function("window.__ready === true", timeout=30000)
-        for name, col in names.items():
-            url = pg.evaluate("([n, f]) => window.renderIcon(n, f)", [name, fill])
+        for name, spec in names.items():
+            col, f, shift = spec if isinstance(spec, tuple) else (spec, fill, 0)
+            url = pg.evaluate("([n, f, y]) => window.renderIcon(n, f, y)", [name, f, shift])
             im = Image.open(io.BytesIO(base64.b64decode(url.split(",")[1]))).convert("RGBA")
             # Kontur auf hoher Auflösung, danach runterrechnen
             r, g, bch, al = im.split()

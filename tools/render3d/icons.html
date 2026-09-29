@@ -507,7 +507,7 @@ MODELS.bot_zeitwaechter = () => {
 };
 
 // ---------------------------------------------------------------- Rendern
-window.renderIcon = (name, fill = 0.86) => {
+window.renderIcon = (name, fill = 0.86, yShift = 0) => {
   const scene = new THREE.Scene();
   scene.environment = envTex;
   const group = MODELS[name]();
@@ -519,7 +519,7 @@ window.renderIcon = (name, fill = 0.86) => {
   const box = new THREE.Box3().setFromObject(group);
   const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
   const k = 2.2 * fill / Math.max(size.x, size.y);
-  group.scale.setScalar(k); group.position.sub(center.multiplyScalar(k));
+  group.scale.setScalar(k); group.position.sub(center.multiplyScalar(k)); group.position.y += yShift;
   const cam = new THREE.PerspectiveCamera(20, 1, 0.1, 100);
   const d = 1.1 / Math.tan(THREE.MathUtils.degToRad(10)); cam.position.set(0, 0, d); cam.lookAt(0, 0, 0);
   renderer.setClearColor(0x000000, 0); renderer.clear();

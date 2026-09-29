@@ -320,7 +320,8 @@ def main():
         br.close()
     sys.path.insert(0, os.path.dirname(__file__))
     import icons3d
-    ims = icons3d.render({n: v[3] for n, v in ICONS3D.items()}, 256, fill=0.87)
+    LABELED = {"upgrades", "aufgaben", "forschung", "shop", "rebirth", "index", "teleport", "drop"}   # unten bleibt Platz für die Beschriftung
+    ims = icons3d.render({n: (((v[3], 0.88, 0.1) if n == "drop" else (v[3], 0.75, 0.17)) if n in LABELED else v[3]) for n, v in ICONS3D.items()}, 256, fill=0.87)
     for n, (x, y, sz, _) in ICONS3D.items():
         atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
