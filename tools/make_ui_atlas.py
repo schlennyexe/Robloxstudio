@@ -253,8 +253,8 @@ def small_star():
 TILE = 224
 SPRITES = [  # name, x, y, w, h, svg-body(vw,vh)
 ]
-def tile(name, x, y, colour, icon):
-    SPRITES.append((name, x, y, TILE, TILE, svg_wrap(TILE, TILE, 256, 256, tile_body(MID[colour], icon(MID[colour])))))
+def tile(name, x, y, colour, icon, size=TILE):
+    SPRITES.append((name, x, y, size, size, svg_wrap(size, size, 256, 256, tile_body(MID[colour], icon(MID[colour])))))
 def plate(name, x, y, w, h, colour):
     SPRITES.append((name, x, y, w, h, svg_wrap(w, h, w, h, plate_body(w, h, MID[colour]))))
 def small(name, x, y, fn):
@@ -268,6 +268,7 @@ ICONS3D = {
     "shop": (672, 0, 224, "#5a0a18"),
     "rebirth": (0, 224, 224, "#5a0f34"),
     "index": (224, 224, 224, "#0c2a66"),
+    "teleport": (704, 224, 192, "#0c2a66"),
     "nut": (896, 0, 128, "#5a3200"),
     "gear": (896, 128, 128, "#2a1060"),
     "clover": (896, 256, 128, "#0d3a14"),
@@ -284,8 +285,8 @@ BOTS = {
     "bot_drache": "#5a3200", "bot_samurai": "#5a0a18", "bot_satellit": "#5a4a10", "bot_prototyp": "#4a0a5a",
 }
 # --- SVG-Platten und Symbole
-tile("close", 448, 224, "red", ico_close)
-tile("plus", 672, 224, "gold", ico_plus)
+tile("close", 448, 224, "red", ico_close, 128)
+tile("plus", 576, 224, "gold", ico_plus, 128)
 small("glint", 704, 448, small_glint)
 plate("gold2", 0, 640, 256, 128, "gold")
 plate("gray2", 256, 640, 256, 128, "gray")

@@ -183,6 +183,20 @@ MODELS.star = () => {
 };
 
 
+
+MODELS.teleport = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.24, 48), mat(0x4a5578, { roughness: 0.5 }), 0, -0.95, 0));
+  g.add(mesh(new THREE.CylinderGeometry(1.0, 1.05, 0.1, 48), mat(0x2fe0d0, { emissive: 0x0aa0a0, emissiveIntensity: 0.6 }), 0, -0.8, 0));
+  const ring = mesh(new THREE.TorusGeometry(0.95, 0.2, 24, 64), mat(0x4f8dff, { roughness: 0.3 }), 0, 0.15, 0);
+  g.add(ring);
+  const disc = mesh(new THREE.CircleGeometry(0.85, 48), new THREE.MeshPhysicalMaterial({ color: 0x66f0ff, emissive: 0x22c8ff, emissiveIntensity: 0.7, roughness: 0.2, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }), 0, 0.15, 0);
+  g.add(disc);
+  for (const [x, y, r] of [[-0.3, 0.45, 0.13], [0.35, -0.05, 0.1], [0.05, 0.05, 0.16]]) g.add(mesh(new THREE.SphereGeometry(r, 16, 16), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.7 }), x, y, 0.05));
+  for (const s of [-1, 1]) g.add(rbox(0.26, 0.5, 0.26, 0.06, mat(0x2f6ae0), s * 0.95, -0.55, 0));
+  g.rotation.set(0.28, -0.5, 0); return g;
+};
+
 // ---------------------------------------------------------------- Bots (je einer pro Seltenheit), Körper in Seltenheitsfarbe
 const eyes = (g, y, z, sep = 0.28, r = 0.17, col = 0xffffff) => {
   for (const s of [-1, 1]) {

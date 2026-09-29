@@ -30,8 +30,8 @@ local SOUND_IDS = { click = "rbxasset://sounds/clickfast.wav", buy = "rbxasset:/
 
 -- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
 local SPR = {
-	close = { 448, 224, 224, 224 },
-	plus = { 672, 224, 224, 224 },
+	close = { 448, 224, 128, 128 },
+	plus = { 576, 224, 128, 128 },
 	glint = { 704, 448, 128, 128 },
 	gold2 = { 0, 640, 256, 128 },
 	gray2 = { 256, 640, 256, 128 },
@@ -47,6 +47,7 @@ local SPR = {
 	shop = { 672, 0, 224, 224 },
 	rebirth = { 0, 224, 224, 224 },
 	index = { 224, 224, 224, 224 },
+	teleport = { 704, 224, 192, 192 },
 	nut = { 896, 0, 128, 128 },
 	gear = { 896, 128, 128, 128 },
 	clover = { 896, 256, 128, 128 },
@@ -797,6 +798,7 @@ do
 	tile(right, { key = "shop", label = "SHOP", emoji = "🛒", pal = P.red, order = 1 })
 	tile(right, { key = "rebirth", label = "REBIRTH", emoji = "🔄", pal = P.pink, order = 2 })
 	tile(right, { key = "index", label = "INDEX", emoji = "📖", pal = P.blue, order = 3 })
+	tile(right, { key = "teleport", label = "TELEPORT", emoji = "🌀", pal = P.blue, order = 4 })
 end
 
 -- =====================================================================
@@ -1253,6 +1255,12 @@ do
 			{ id = "t2", spr = "potion_y", title = "Schraubentrank", sub = "Einkommen ×2, 5 Min", btn = "R$ 45", btnSpr = "blue2", btnPal = P.blue },
 			{ id = "t3", spr = "potion_p", title = "Turbotrank", sub = "40 % schneller droppen", btn = "R$ 35", btnSpr = "blue2", btnPal = P.blue },
 		} },
+		{ key = "teleport", title = "Teleport", emoji = "🌀", pal = P.blue, cols = 1, rows = {
+			{ id = "brett", emoji = "🎯", title = "Glücksbrett", sub = "Kerne droppen und Bots bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "werkstatt", emoji = "🏭", title = "Werkstatt", sub = "Arbeiter forschen und bauen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "invasion", emoji = "🛡️", title = "Invasion", sub = "Verteidiger schützen den Tresor", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+			{ id = "bots", emoji = "🤖", title = "Bots", sub = "Deine gesammelten Bots ansehen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
+		} },
 		{ key = "index", title = "Index", emoji = "📖", pal = P.blue, cols = 2, rows = (function()
 			local out = {}
 			for i, r in ipairs(RARITY) do
@@ -1559,7 +1567,7 @@ function UI.feed(cfg)
 			slot:Destroy()
 		end)
 	end
-	while #feedSlots > 3 do
+	while #feedSlots > 2 do
 		local oldest = feedSlots[1]
 		table.remove(feedSlots, 1)
 		oldest:Destroy()
