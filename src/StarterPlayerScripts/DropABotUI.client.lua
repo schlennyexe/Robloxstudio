@@ -125,6 +125,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -1623,7 +1624,7 @@ function UI.banner(cfg)
 	end)
 end
 
--- cfg: { player, userId, rarity = "Kosmisch" (Index 1-8 oder Name), bot, oneIn }
+-- cfg: { player, userId, rarity = "Kosmisch" (Index 1-8 oder Name), bot = "Bot-Name", botIcon = "bot_prototyp" (optional), oneIn }
 function UI.feed(cfg)
 	local rar = RARITY[1]
 	for i, r in ipairs(RARITY) do
@@ -1642,9 +1643,16 @@ function UI.feed(cfg)
 	stripes(plate, 360, 68, C.white, 0.94, 22, 8, 35)
 
 	local av = make("Frame", { BackgroundColor3 = rar.color, Position = UDim2.fromOffset(8, 8), Size = UDim2.fromOffset(52, 52), ZIndex = 3 }, plate)
-	round(av, 999)
-	outline(av, 3)
-	if cfg.userId then
+	if useBots and cfg.botIcon and BSPR[cfg.botIcon] then
+		av.BackgroundTransparency = 1
+		botSprite(av, cfg.botIcon, { sz = UDim2.fromOffset(64, 64), pos = UDim2.fromOffset(-6, -8), z = 4 })
+	else
+		round(av, 999)
+		outline(av, 3)
+	end
+	if useBots and cfg.botIcon and BSPR[cfg.botIcon] then
+		-- Bot-Symbol statt Spieler-Bild
+	elseif cfg.userId then
 		make("ImageLabel", {
 			BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. cfg.userId .. "&w=150&h=150",
@@ -1693,6 +1701,28 @@ UI.botSprite = function(parent, key, o)
 end
 shared.DropABotUI = UI
 print("[DropABotUI] UI gebaut, Elemente:", #gui:GetDescendants())
+
+-- Meldet im Output, ob die hochgeladenen Bilder wirklich geladen wurden
+local function checkImage(label, id)
+	if id == "" then
+		print("[DropABotUI] " .. label .. ": keine ID eingetragen, einfache Optik.")
+		return
+	end
+	task.spawn(function()
+		local probe = Instance.new("ImageLabel")
+		probe.Image = id
+		ContentProvider:PreloadAsync({ probe }, function(_, status)
+			if status == Enum.AssetFetchStatus.Success then
+				print("[DropABotUI] " .. label .. ": geladen.")
+			else
+				warn("[DropABotUI] " .. label .. " konnte nicht geladen werden (" .. tostring(status) .. "). ID richtig? Neue Bilder brauchen manchmal ein paar Minuten für die Prüfung.")
+			end
+		end)
+		probe:Destroy()
+	end)
+end
+checkImage("Bild-Atlas", ATLAS_ID)
+checkImage("Bot-Bilder", BOT_ATLAS_ID)
 
 -- =====================================================================
 --  DEMO (nur Optik ansehen; DEMO = false setzen, sobald das Spiel die API nutzt)
@@ -1761,10 +1791,10 @@ if DEMO then
 		UI.banner({ emoji = "🤖", bot = "bot_samurai", name = player.DisplayName, text = "hat einen Samurai-Mech gebaut!", color = RARITY[6].color })
 	end)
 	task.delay(3, function()
-		UI.feed({ player = "Nerd", rarity = "Kosmisch", bot = "Prototyp Null", oneIn = 100000 })
+		UI.feed({ player = "Nerd", rarity = "Kosmisch", bot = "Prototyp Null", botIcon = "bot_prototyp", oneIn = 100000 })
 	end)
 	task.delay(4.5, function()
-		UI.feed({ player = "Taffy", rarity = "Göttlich", bot = "Satelliten-Bot", oneIn = 6500 })
+		UI.feed({ player = "Taffy", rarity = "Göttlich", bot = "Satelliten-Bot", botIcon = "bot_satellit", oneIn = 6500 })
 	end)
 end
 
