@@ -72,14 +72,14 @@ def svg_wrap(w, h, vw, vh, body):
 
 # ---------------------------------------------------------------- Kachel (quadratischer Knopf)
 def tile_body(mid, icon):
-    top, hi = light(mid, .62), light(mid, .30)
+    top, hi = light(mid, .46), light(mid, .2)
     rim_t, rim_b = dark(mid, .02), dark(mid, .42)
     base, ink, deep = dark(mid, .58), dark(mid, .82), dark(mid, .5)
     return f'''<defs>
 <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{rim_t}"/><stop offset="1" stop-color="{rim_b}"/></linearGradient>
 <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{top}"/><stop offset=".38" stop-color="{hi}"/><stop offset="1" stop-color="{mid}"/></linearGradient>
 <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="{deep}" stop-opacity="0"/><stop offset="1" stop-color="{deep}" stop-opacity=".6"/></linearGradient>
-<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></linearGradient>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".72"/><stop offset="1" stop-color="#fff" stop-opacity=".04"/></linearGradient>
 <radialGradient id="glow" cx=".5" cy="1.05" r=".75"><stop offset="0" stop-color="{light(mid, .75)}" stop-opacity=".75"/><stop offset="1" stop-color="{light(mid, .75)}" stop-opacity="0"/></radialGradient>
 <clipPath id="inner"><rect x="22" y="16" width="212" height="200" rx="42"/></clipPath></defs>
 <rect x="10" y="20" width="236" height="226" rx="52" fill="{base}" stroke="{ink}" stroke-width="8"/>
@@ -172,7 +172,7 @@ def ico_plus(mid):
 
 # ---------------------------------------------------------------- Platten (breite Knöpfe / Karten)
 def plate_body(w, h, mid):
-    top, hi = light(mid, .6), light(mid, .28)
+    top, hi = light(mid, .44), light(mid, .18)
     rim_t, rim_b = dark(mid, .02), dark(mid, .42)
     base, ink, deep = dark(mid, .58), dark(mid, .82), dark(mid, .5)
     st, dep = h * .04, h * .10
@@ -184,7 +184,7 @@ def plate_body(w, h, mid):
 <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{rim_t}"/><stop offset="1" stop-color="{rim_b}"/></linearGradient>
 <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{top}"/><stop offset=".4" stop-color="{hi}"/><stop offset="1" stop-color="{mid}"/></linearGradient>
 <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="{deep}" stop-opacity="0"/><stop offset="1" stop-color="{deep}" stop-opacity=".55"/></linearGradient>
-<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity=".03"/></linearGradient>
 <clipPath id="inner"><rect x="{x0 + ins}" y="{y0 + ins}" width="{fw - 2 * ins}" height="{fh - 2 * ins}" rx="{rx - ins * .7}"/></clipPath></defs>
 <rect x="{x0}" y="{y0 + dep}" width="{fw}" height="{fh}" rx="{rx}" fill="{base}" stroke="{ink}" stroke-width="{st}"/>
 <rect x="{x0}" y="{y0}" width="{fw}" height="{fh}" rx="{rx}" fill="url(#rim)" stroke="{ink}" stroke-width="{st}"/>
@@ -274,7 +274,7 @@ ICONS3D = {
     "clover": (896, 256, 128, "#0d3a14"),
     "lock": (576, 448, 128, "#4a2c00"),
     "star": (832, 448, 128, "#5a3200"),
-    "drop": (0, 448, 192, "#4a1a00"),
+    "drop": (0, 448, 192, "#04304a"),
     "potion_g": (192, 448, 128, "#0d3a14"),
     "potion_y": (320, 448, 128, "#5a3200"),
     "potion_p": (448, 448, 128, "#3a1060"),
@@ -293,6 +293,8 @@ BOTS = {
     "bot_astronaut": "#5a4a10", "bot_sonne": "#5a4a10",
     "bot_kikern": "#4a0a5a", "bot_zeitwaechter": "#4a0a5a",
 }
+# --- AUTO-Schalter (aus / an), 2:1
+TOGGLES = {"toggle_off": (210, 576, 108, 64), "toggle_on": (330, 576, 108, 64)}
 # --- Upgrade-Symbole (ebenfalls in atlas_bots.png)
 UPS = {
     "up_kerne": "#08425a", "up_tempo": "#7a3a00", "up_glueck": "#0d3a14", "up_reihen": "#1a2a6a",
@@ -331,6 +333,10 @@ def main():
     ims = icons3d.render({n: (((v[3], 0.84, 0.1) if n == "drop" else (v[3], 0.75, 0.17)) if n in LABELED else v[3]) for n, v in ICONS3D.items()}, 256, fill=0.87)
     for n, (x, y, sz, _) in ICONS3D.items():
         atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
+    # Schalter: mittleres Band (2:1) ausschneiden
+    tims = icons3d.render({"toggle_off": ("#20242f", 0.94, 0), "toggle_on": ("#0a3a18", 0.94, 0)}, 256)
+    for n, (x, y, w, h) in TOGGLES.items():
+        atlas.alpha_composite(tims[n].crop((0, 52, 256, 204)).resize((w, h), Image.LANCZOS), (x, y))
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
     with open(os.path.join(OUT, "atlas_rects.lua"), "w", encoding="utf8") as f:
         f.write("local SPR = {\n")
@@ -338,6 +344,8 @@ def main():
             f.write(f'\t{name} = {{ {x}, {y}, {w}, {h} }},\n')
         for n, (x, y, sz, _) in ICONS3D.items():
             f.write(f'\t{n} = {{ {x}, {y}, {sz}, {sz} }},\n')
+        for n, (x, y, w, h) in TOGGLES.items():
+            f.write(f'\t{n} = {{ {x}, {y}, {w}, {h} }},\n')
         f.write("}\n")
     # --- zweite Bilddatei: Bots und Upgrade-Symbole (6 pro Reihe, 160 px)
     ims = icons3d.render({n: c for n, c in {**BOTS, **UPS}.items()}, 256, fill=0.87)

@@ -31,8 +31,14 @@ local ATLAS_ID = ""
 -- BOT-BILDER (optional, für Index und Banner): assets/ui/atlas_bots.png ebenso hochladen und die ID hier eintragen.
 local BOT_ATLAS_ID = ""
 
--- Klick-Geräusche (optional). Leer lassen = stumm. Eigene Sounds: "rbxassetid://ZAHL"
-local SOUND_IDS = { click = "rbxasset://sounds/clickfast.wav", buy = "rbxasset://sounds/electronicpingshort.wav", hover = "" }
+-- Klick-Geräusche: leise und sanft. Eigene Töne haben Vorrang: assets/audio/click.wav und buy.wav in Studio hochladen
+-- (Asset-Manager > Audio > Massen-Import) und die ID hier eintragen. Leer lassen = weiche Töne, die in Roblox eingebaut sind.
+local SOUND_IDS = { click = "", buy = "", hover = "" }
+local SOUND_FALLBACK = {
+	click = { "rbxasset://sounds/switch.mp3", "rbxasset://sounds/snap.mp3" },
+	buy = { "rbxasset://sounds/switch.mp3", "rbxasset://sounds/snap.mp3" },
+}
+local SOUND_VOLUME = { click = 0.22, buy = 0.3, hover = 0.12 }
 
 -- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
 local SPR = {
@@ -64,6 +70,8 @@ local SPR = {
 	potion_y = { 320, 448, 128, 128 },
 	potion_p = { 448, 448, 128, 128 },
 	hand = { 448, 352, 96, 96 },
+	toggle_off = { 210, 576, 108, 64 },
+	toggle_on = { 330, 576, 108, 64 },
 }
 
 -- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
@@ -373,27 +381,45 @@ local function soundId(id)
 	return id
 end
 
--- Sounds werden einmal geprüft; was nicht lädt, bleibt stumm (kein Warn-Spam bei jedem Klick)
-local soundOk = {}
-for key, id in pairs(SOUND_IDS) do
-	if id ~= "" then
-		task.spawn(function()
+-- Pro Geräusch wird die erste Datei genommen, die wirklich lädt (eigene ID zuerst, dann die Ersatz-Töne)
+local soundPick = {}
+for _, key in ipairs({ "click", "buy", "hover" }) do
+	task.spawn(function()
+		local candidates = {}
+		if SOUND_IDS[key] and SOUND_IDS[key] ~= "" then
+			table.insert(candidates, { soundId(SOUND_IDS[key]), true })
+		end
+		for _, id in ipairs(SOUND_FALLBACK[key] or {}) do
+			table.insert(candidates, { id, false })
+		end
+		for _, c in ipairs(candidates) do
+			local ok = false
 			local probe = Instance.new("Sound")
-			probe.SoundId = soundId(id)
+			probe.SoundId = c[1]
 			ContentProvider:PreloadAsync({ probe }, function(_, status)
-				soundOk[key] = status == Enum.AssetFetchStatus.Success
+				ok = status == Enum.AssetFetchStatus.Success
 			end)
 			probe:Destroy()
-		end)
-	end
+			if ok then
+				soundPick[key] = { id = c[1], own = c[2] }
+				return
+			end
+		end
+	end)
 end
 
 local function playSound(key)
-	local id = SOUND_IDS[key]
-	if not id or id == "" or not soundOk[key] then
+	local pick = soundPick[key]
+	if not pick then
 		return
 	end
-	local snd = make("Sound", { SoundId = soundId(id), Volume = 0.5 }, SoundService)
+	local snd = make("Sound", {
+		SoundId = pick.id, Volume = SOUND_VOLUME[key] or 0.2, PlaybackSpeed = pick.own and 1 or (0.94 + math.random() * 0.1),
+	}, SoundService)
+	if not pick.own then
+		-- eingebaute Töne: hohe Frequenzen absenken, damit es weicher klingt
+		make("EqualizerSoundEffect", { HighGain = -14, MidGain = -3, LowGain = 0 }, snd)
+	end
 	snd:Play()
 	task.delay(3, function()
 		snd:Destroy()
@@ -768,18 +794,18 @@ local function currencyPlate(cfg)
 	end
 	local iconBox = make("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(6, 3),
-		Size = UDim2.fromOffset(48, 48),
+		Position = UDim2.fromOffset(useAtlas and 2 or 6, useAtlas and 0 or 3),
+		Size = UDim2.fromOffset(useAtlas and 58 or 48, useAtlas and 58 or 48),
 		ZIndex = 3,
 	}, inner)
 	cfg.icon(iconBox)
-	local value = text(inner, "0", 30, {
+	local value = text(inner, "0", useAtlas and 38 or 30, {
 		stroke = useAtlas and 4 or 3,
-		name = "Value", ax = AX.Left, sz = UDim2.new(1, -66, 0, 32), pos = UDim2.fromOffset(60, 1),
+		name = "Value", ax = AX.Left, sz = UDim2.new(1, -70, 0, useAtlas and 40 or 32), pos = UDim2.fromOffset(useAtlas and 64 or 60, 0),
 	})
-	fit(value, 30)
+	fit(value, useAtlas and 38 or 30)
 	local sub = text(inner, "", 15, {
-		name = "Sub", ax = AX.Left, color = cfg.subColor, stroke = 2, sz = UDim2.new(1, -66, 0, 18), pos = UDim2.fromOffset(60, 32),
+		name = "Sub", ax = AX.Left, color = cfg.subColor, stroke = 2, sz = UDim2.new(1, -70, 0, 18), pos = UDim2.fromOffset(useAtlas and 66 or 60, useAtlas and 38 or 32),
 	})
 	return { frame = rim, counter = newCounter(value), sub = sub, bump = bump }
 end
@@ -787,14 +813,14 @@ end
 local moneyPlate = currencyPlate({
 	name = "Schrauben", order = 1, width = 260, rim = P.gold[2], subColor = Color3.fromRGB(255, 230, 150),
 	icon = function(p)
-		hexNut(p, 44, NUT_FILL, NUT_EDGE)
+		hexNut(p, 56, NUT_FILL, NUT_EDGE)
 	end,
 })
 local gearPlate = currencyPlate({
 	name = "Zahnraeder", order = 2, width = 170, rim = P.purple[2], subColor = Color3.fromRGB(226, 208, 255),
 	icon = function(p)
 		if useAtlas then
-			sprite(p, "gear", { sz = UDim2.fromOffset(46, 46), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3 })
+			sprite(p, "gear", { sz = UDim2.fromOffset(54, 54), anchor = Vector2.new(0.5, 0.5), pos = UDim2.fromScale(0.5, 0.5), z = 3 })
 			return
 		end
 		local disc = make("Frame", {
@@ -851,10 +877,10 @@ local function tile(parent, cfg)
 	})
 	if big then
 		-- Beschriftung liegt mit dicker Kontur über dem unteren Teil des Icons
-		local lbl = text(face, cfg.label, 20, {
-			name = "Label", sz = UDim2.new(1.2, 0, 0, 24), pos = UDim2.new(0.5, 0, 0.86, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4,
+		local lbl = text(face, cfg.label, 24, {
+			name = "Label", sz = UDim2.new(1.25, 0, 0, 30), pos = UDim2.new(0.5, 0, 0.87, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4,
 		})
-		fit(lbl, 20)
+		fit(lbl, 24)
 	else
 		glyph(face, cfg.emoji, 46, { pos = UDim2.fromOffset(0, -2) })
 		local lbl = text(holder, cfg.label, 20, {
@@ -884,13 +910,13 @@ end
 do
 	local left = column("Left", 0, 16)
 	local right = column("Right", 1, -16)
-	tile(left, { key = "upgrades", label = "UPGRADES", emoji = "⬆️", pal = P.green, order = 1 })
-	tile(left, { key = "aufgaben", label = "AUFGABEN", emoji = "📋", pal = P.blue, order = 2 })
-	tile(left, { key = "forschung", label = "FORSCHUNG", emoji = "🔬", pal = P.purple, order = 3 })
-	tile(right, { key = "shop", label = "SHOP", emoji = "🛒", pal = P.red, order = 1 })
-	tile(right, { key = "rebirth", label = "REBIRTH", emoji = "🔄", pal = P.pink, order = 2 })
-	tile(right, { key = "index", label = "INDEX", emoji = "📖", pal = P.blue, order = 3 })
-	tile(right, { key = "teleport", label = "TELEPORT", emoji = "🌀", pal = P.blue, order = 4 })
+	tile(left, { key = "upgrades", label = "Upgrades", emoji = "⬆️", pal = P.green, order = 1 })
+	tile(left, { key = "aufgaben", label = "Aufgaben", emoji = "📋", pal = P.blue, order = 2 })
+	tile(left, { key = "forschung", label = "Forschung", emoji = "🔬", pal = P.purple, order = 3 })
+	tile(right, { key = "shop", label = "Shop", emoji = "🛒", pal = P.red, order = 1 })
+	tile(right, { key = "rebirth", label = "Rebirth", emoji = "🔄", pal = P.pink, order = 2 })
+	tile(right, { key = "index", label = "Index", emoji = "📖", pal = P.blue, order = 3 })
+	tile(right, { key = "teleport", label = "Teleport", emoji = "🌀", pal = P.blue, order = 4 })
 end
 
 -- =====================================================================
@@ -900,7 +926,7 @@ local luckLabel
 do
 	local luck = make("Frame", {
 		Name = "Luck", BackgroundColor3 = C.white, AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 16, 1, -16), Size = UDim2.fromOffset(260, 56),
+		Position = useAtlas and UDim2.new(0, 16, 1, -14) or UDim2.new(0, 16, 1, -16), Size = useAtlas and UDim2.fromOffset(72, 96) or UDim2.fromOffset(260, 56),
 	}, root)
 	if useAtlas then
 		luck.BackgroundTransparency = 1
@@ -910,7 +936,7 @@ do
 		vgrad(luck, P.plate)
 	end
 	if useAtlas then
-		sprite(luck, "clover", { sz = UDim2.fromOffset(58, 58), pos = UDim2.fromOffset(0, -1), z = 3 })
+		sprite(luck, "clover", { sz = UDim2.fromOffset(64, 64), pos = UDim2.fromOffset(4, 0), z = 3 })
 	else
 		local clover = make("Frame", {
 			BackgroundColor3 = C.white, Position = UDim2.fromOffset(5, 5), Size = UDim2.fromOffset(46, 46), ZIndex = 3,
@@ -920,10 +946,15 @@ do
 		vgrad(clover, P.green)
 		glyph(clover, "🍀", 28)
 	end
-	luckLabel = text(luck, "+0% Glück", 24, { ax = AX.Left, sz = UDim2.new(1, -118, 1, 0), pos = UDim2.fromOffset(60, 0) })
-	fit(luckLabel, 24)
+	if useAtlas then
+		luckLabel = text(luck, "+0%", 22, { sz = UDim2.new(1.2, 0, 0, 24), pos = UDim2.new(0.5, 0, 0, 80), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
+	else
+		luckLabel = text(luck, "+0% Glück", 24, { ax = AX.Left, sz = UDim2.new(1, -118, 1, 0), pos = UDim2.fromOffset(60, 0) })
+		fit(luckLabel, 24)
+	end
 	chunky(luck, {
-		Name = "Plus", Size = UDim2.fromOffset(42, 42), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, -2),
+		Name = "Plus", Size = useAtlas and UDim2.fromOffset(30, 30) or UDim2.fromOffset(42, 42), AnchorPoint = useAtlas and Vector2.new(0.5, 0.5) or Vector2.new(1, 0.5),
+		Position = useAtlas and UDim2.fromOffset(64, 10) or UDim2.new(1, -8, 0.5, -2),
 		pal = P.gold, radius = 10, depth = 4, spr = "plus", text = (not useAtlas) and "+" or nil, textSize = 30, z = 4, burst = true,
 		onClick = function()
 			if UI.onOpen then
@@ -936,10 +967,13 @@ end
 
 local boostList = make("Frame", {
 	Name = "Boosts", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0, 1),
-	Position = UDim2.new(0, 16, 1, -82), Size = UDim2.fromOffset(260, 0), AutomaticSize = Enum.AutomaticSize.Y,
+	Position = useAtlas and UDim2.new(0, 92, 1, -14) or UDim2.new(0, 16, 1, -82),
+	Size = useAtlas and UDim2.fromOffset(0, 96) or UDim2.fromOffset(260, 0),
+	AutomaticSize = useAtlas and Enum.AutomaticSize.X or Enum.AutomaticSize.Y,
 }, root)
 make("UIListLayout", {
-	Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom,
+	FillDirection = useAtlas and Enum.FillDirection.Horizontal or Enum.FillDirection.Vertical,
+	Padding = UDim.new(0, useAtlas and 4 or 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom,
 }, boostList)
 
 -- =====================================================================
@@ -985,8 +1019,9 @@ do
 	end
 
 	local _, aFace, _, recolor = chunky(root, {
-		Name = "Auto", Size = useAtlas and UDim2.fromOffset(k(64), k(64)) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -(k(184) / 2 + k(16)) or -170, 1, useAtlas and -k(44) or -30),
-		pal = P.gray, radius = 16, depth = 6, spr = useAtlas and "gear" or "gray2", text = (not useAtlas) and "AUTO" or nil, textSize = 26, burst = useAtlas,
+		Name = "Auto", Size = useAtlas and UDim2.fromOffset(k(84), k(50)) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(0.5, useAtlas and -(k(184) / 2 + k(14)) or -170, 1, useAtlas and -k(46) or -30),
+		pal = P.gray, radius = 16, depth = 6, spr = useAtlas and "toggle_off" or "gray2", text = (not useAtlas) and "AUTO" or nil, textSize = 26,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
 			if UI.onAutoToggle then
@@ -996,15 +1031,12 @@ do
 	})
 	autoRecolor = recolor
 	if useAtlas then
-		-- Zahnrad-Symbol, dreht sich nicht. An = bunt und grüne Schrift, Aus = grau
-		local art = aFace.Parent and aFace.Parent:FindFirstChild("Art")
-		local aLabel = text(aFace, "AUTO AUS", k(15), { sz = UDim2.new(1.4, 0, 0, k(20)), pos = UDim2.new(0.5, 0, 0.92, 0), anchor = Vector2.new(0.5, 0.5), stroke = 3 })
+		-- 3D-Schalter: Aus = grau mit Knopf links, An = grün mit Knopf rechts
+		text(aFace, "AUTO", k(17), { sz = UDim2.new(1, 0, 0, k(20)), pos = UDim2.new(0.5, 0, 0, -k(12)), anchor = Vector2.new(0.5, 0.5), stroke = 3 })
+		local aState = text(aFace, "AUS", k(13), { sz = UDim2.new(0.5, 0, 0.6, 0), pos = UDim2.new(0.74, 0, 0.5, 0), anchor = Vector2.new(0.5, 0.5), stroke = 2 })
 		UI._autoSet = function(on)
-			aLabel.Text = on and "AUTO AN" or "AUTO AUS"
-			aLabel.TextColor3 = on and Color3.fromRGB(130, 255, 130) or C.white
-			if art then
-				art.ImageColor3 = on and C.white or Color3.fromRGB(150, 150, 165)
-			end
+			aState.Text = on and "AN" or "AUS"
+			aState.Position = on and UDim2.new(0.26, 0, 0.5, 0) or UDim2.new(0.74, 0, 0.5, 0)
 		end
 	else
 		local aState = text(aFace, "AUS", 14, { sz = UDim2.new(1, 0, 0, 16), pos = UDim2.new(0, 0, 1, -22), stroke = 2, name = "State" })
@@ -1576,7 +1608,7 @@ function UI.setZahnraeder(n, info)
 end
 
 function UI.setLuck(prozent)
-	luckLabel.Text = "+" .. fmt(prozent) .. "% Glück"
+	luckLabel.Text = "+" .. fmt(prozent) .. (useAtlas and "%" or "% Glück")
 end
 
 function UI.setDropProgress(p)
@@ -1585,7 +1617,7 @@ end
 
 function UI.setAuto(on)
 	UI.state.auto = on
-	autoRecolor(on and P.green or P.gray, on and "green2" or "gray2")
+	autoRecolor(on and P.green or P.gray, useAtlas and (on and "toggle_on" or "toggle_off") or (on and "green2" or "gray2"))
 	UI._autoSet(on)
 end
 
@@ -1611,10 +1643,12 @@ function UI.setBoosts(list)
 		end
 	end
 	for i, b in ipairs(list) do
-		local pillFrame = make("Frame", { BackgroundColor3 = C.white, Size = UDim2.fromOffset(200, 34), LayoutOrder = i }, boostList)
+		local timeText = string.format("%d:%02d", math.floor(b.seconds / 60), b.seconds % 60)
+		local pillFrame = make("Frame", { BackgroundColor3 = C.white, Size = useAtlas and UDim2.fromOffset(64, 96) or UDim2.fromOffset(200, 34), LayoutOrder = i }, boostList)
 		if useAtlas then
 			pillFrame.BackgroundTransparency = 1
-			sprite(pillFrame, b.kind == "schrauben" and "potion_y" or (b.kind == "turbo" and "potion_p" or "potion_g"), { sz = UDim2.fromOffset(34, 34), z = 3 })
+			sprite(pillFrame, b.kind == "schrauben" and "potion_y" or (b.kind == "turbo" and "potion_p" or "potion_g"), { sz = UDim2.fromOffset(60, 60), pos = UDim2.fromOffset(2, 4), z = 3 })
+			text(pillFrame, timeText, 20, { sz = UDim2.new(1.2, 0, 0, 24), pos = UDim2.new(0.5, 0, 0, 80), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
 		else
 			round(pillFrame, 17)
 			outline(pillFrame, 3)
@@ -1622,11 +1656,11 @@ function UI.setBoosts(list)
 			local dot = make("Frame", { BackgroundColor3 = b.color or P.green[1], Position = UDim2.fromOffset(9, 9), Size = UDim2.fromOffset(16, 16), ZIndex = 3 }, pillFrame)
 			round(dot, 999)
 			outline(dot, 2)
+			text(pillFrame, b.name, 17, { ax = AX.Left, sz = UDim2.new(1, -90, 1, 0), pos = UDim2.fromOffset(34, 0), stroke = 2 })
+			text(pillFrame, timeText, 17, {
+				ax = AX.Right, sz = UDim2.fromOffset(60, 34), pos = UDim2.new(1, -10, 0, 0), anchor = Vector2.new(1, 0), stroke = 2, color = Color3.fromRGB(255, 230, 150),
+			})
 		end
-		text(pillFrame, b.name, 17, { ax = AX.Left, sz = UDim2.new(1, -90, 1, 0), pos = UDim2.fromOffset(34, 0), stroke = 2 })
-		text(pillFrame, string.format("%d:%02d", math.floor(b.seconds / 60), b.seconds % 60), 17, {
-			ax = AX.Right, sz = UDim2.fromOffset(60, 34), pos = UDim2.new(1, -10, 0, 0), anchor = Vector2.new(1, 0), stroke = 2, color = Color3.fromRGB(255, 230, 150),
-		})
 	end
 end
 

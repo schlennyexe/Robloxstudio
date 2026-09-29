@@ -7,6 +7,7 @@ from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+GAMMA, SAT, CONTRAST, OUTLINE = 1.32, 1.04, 1.12, 0.048   # Mitteltöne dunkler, Farben satt, Kontur dicker
 
 def _serve():
     h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=os.path.join(HERE, "render3d"))
@@ -44,10 +45,14 @@ def render(names, size, fill=0.86, ol_width=None):
             im = Image.open(io.BytesIO(base64.b64decode(url.split(",")[1]))).convert("RGBA")
             # Kontur auf hoher Auflösung, danach runterrechnen
             r, g, bch, al = im.split()
-            rgb = ImageEnhance.Color(Image.merge("RGB", (r, g, bch))).enhance(1.28)
-            rgb = ImageEnhance.Contrast(rgb).enhance(1.08)
+            # Farbstimmung: Mitteltöne abdunkeln (gegen Überbelichtung), Farben satt, klarer Kontrast
+            arr = np.asarray(Image.merge("RGB", (r, g, bch)), dtype=np.float32) / 255.0
+            arr = np.clip(arr, 0, 1) ** GAMMA
+            rgb = Image.fromarray((arr * 255).astype(np.uint8), "RGB")
+            rgb = ImageEnhance.Color(rgb).enhance(SAT)
+            rgb = ImageEnhance.Contrast(rgb).enhance(CONTRAST)
             im = Image.merge("RGBA", (*rgb.split(), al))
-            w = ol_width if ol_width is not None else 0.034 * im.width
+            w = ol_width if ol_width is not None else OUTLINE * im.width
             im = outline(im, col, w).resize((size, size), Image.LANCZOS)
             out[name] = im
         b.close()

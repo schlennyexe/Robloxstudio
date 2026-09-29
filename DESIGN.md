@@ -86,6 +86,11 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 Banner (`UI.banner({ bot = "bot_samurai", ... })`). Für eigene Stellen: `shared.DropABotUI.botSprite(parent, "bot_katze", { sz = UDim2.fromOffset(96, 96) })`.
 Weitere Bots: Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.
 
+## Farbe der Icons
+
+Die 3D-Icons werden bewusst nicht zu hell gerendert: Mitteltöne abgedunkelt (`GAMMA`), Farben satt (`SAT`), dicke dunkle Kontur
+(`OUTLINE`). Regler oben in `tools/icons3d.py`.
+
 ## Größe
 
 `UI_SCALE` oben im Skript (Standard 1.15) macht die ganze Oberfläche größer oder kleiner. DROP und AUTO behalten
@@ -96,9 +101,9 @@ ihre Größe (`k()` rechnet sie um). Alles andere wächst mit.
 - Darüberfahren: Knopf wächst leicht und wackelt kurz.
 - Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
 - Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`).
-- AUTO: kleines Zahnrad-Symbol mit Beschriftung. An = bunt mit grüner Schrift, Aus = grau. Es dreht sich nicht.
-- DROP: großer Arcade-Druckknopf mit Metallsockel und Pfeil nach unten.
-- Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
+- AUTO: kleiner 3D-Kippschalter. Aus = grau, Knopf links, "AUS". An = grün, Knopf rechts, "AN".
+- DROP: großer 3D-Würfel (Kern) mit Pfeil nach unten. Andere Entwürfe: Trichter mit Kern (`drop_c`), Kristall (`drop_d`), Arcade-Knopf (`drop_arcade`) in `tools/render3d/icons.html`.
+- Geräusche: leise und sanft. Eigene Töne: `assets/audio/click.wav` und `buy.wav` in Studio hochladen (Asset-Manager › Audio) und die IDs in `SOUND_IDS` eintragen. Ohne eigene IDs nimmt das Skript weiche Töne, die in Roblox eingebaut sind, und wählt nur, was wirklich lädt.
 
 ## Welt und Licht (WorldLook)
 
