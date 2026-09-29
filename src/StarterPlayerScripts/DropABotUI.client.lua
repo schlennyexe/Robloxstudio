@@ -1238,7 +1238,6 @@ local rowHosts, rowCols = {}, {}
 -- rows: { { id, emoji | spr | dot, title, sub, progress, barColor, card, btn, btnSpr, btnPal } }
 local function buildRows(key, rows)
 	local host = rowHosts[key]
-	local cols = rowCols[key]
 	for _, ch in ipairs(host:GetChildren()) do
 		if ch:IsA("GuiObject") then
 			ch:Destroy()
