@@ -57,6 +57,7 @@ UI.setBoosts({ { name = "Glückstrank", seconds = 200, color = Color3.fromRGB(74
 UI.setUpgrades({ { id = "kerne", name = "Mehr Kerne", emoji = "⚪", level = 2, valueText = "3 Kerne", cost = 210, state = "active" } })
 UI.banner({ emoji = "🤖", name = "Nerd", text = "hat einen Samurai-Mech gebaut!", color = Color3.fromRGB(251, 75, 110) })
 UI.feed({ player = "Nerd", userId = 1234, rarity = "Kosmisch", bot = "Prototyp Null", oneIn = 100000 })
+UI.popup("+52")                     -- Zahl steigt über dem DROP-Knopf auf
 UI.onDrop = function() end          -- ebenso: onAutoToggle, onUpgradeBuy(id), onAutoUpgrade, onOpen(key)
 ```
 

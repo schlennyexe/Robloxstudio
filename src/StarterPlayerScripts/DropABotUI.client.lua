@@ -403,6 +403,27 @@ local function burst(target)
 	end
 end
 
+-- Schwebende Zahl (z.B. "+52"), steigt auf und blendet aus
+local function popup(target, str, color)
+	if not fxLayer or not target or not target.Parent then
+		return
+	end
+	local c = (target.AbsolutePosition + target.AbsoluteSize / 2 - fxLayer.AbsolutePosition) / rootScale.Scale
+	local x, y = c.X + math.random(-28, 28), c.Y - 50
+	local l = make("TextLabel", {
+		Name = "Popup", BackgroundTransparency = 1, Font = FONT, Text = str, TextSize = 22,
+		TextColor3 = color or Color3.fromRGB(255, 236, 120), AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(180, 44), ZIndex = 3,
+	}, fxLayer)
+	local st = outline(l, 4)
+	tween(l, 0.2, { TextSize = 38 }, Enum.EasingStyle.Back)
+	tween(l, 0.8, { Position = UDim2.fromOffset(x, y - 80), TextTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	tween(st, 0.8, { Transparency = 1 })
+	task.delay(0.85, function()
+		l:Destroy()
+	end)
+end
+
 -- Regenbogen-Text (Kosmisch)
 local rainbows = {}
 local rainbowPhase = 0
@@ -477,6 +498,11 @@ local function chunky(parent, cfg)
 		Name = "Anim", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.fromScale(0.5, 1), Size = UDim2.fromScale(1, 1),
 	}, holder)
+	if cfg.bob then
+		TweenService:Create(anim, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+			Position = UDim2.new(0.5, 0, 1, -7),
+		}):Play()
+	end
 	local imageMode = useAtlas and cfg.spr ~= nil and SPR[cfg.spr] ~= nil
 	local face, grad, base, art
 	if imageMode then
@@ -880,18 +906,19 @@ make("UIListLayout", {
 -- =====================================================================
 --  UNTEN MITTE: DROP + AUTO
 -- =====================================================================
-local dropFill, dropHint, autoRecolor
+local dropFill, dropHint, autoRecolor, dropFace
 do
 	local _, face = chunky(root, {
 		Name = "Drop", Size = useAtlas and UDim2.fromOffset(184, 184) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
 		Position = useAtlas and UDim2.new(0.5, 0, 1, -40) or UDim2.new(0.5, 0, 1, -24),
-		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
+		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true, bob = useAtlas,
 		onClick = function()
 			if UI.onDrop then
 				UI.onDrop()
 			end
 		end,
 	})
+	dropFace = face
 	if useAtlas then
 		text(face, "DROP", 46, { sz = UDim2.new(1.3, 0, 0, 52), pos = UDim2.new(0.5, 0, 0.84, 0), anchor = Vector2.new(0.5, 0.5), stroke = 5 })
 		local track = make("Frame", {
@@ -1484,6 +1511,10 @@ function UI.setAuto(on)
 	UI._autoState.Text = on and "AN" or "AUS"
 end
 
+function UI.popup(str, color)
+	popup(dropFace, str, color)
+end
+
 function UI.showHint(on)
 	dropHint.Visible = on
 end
@@ -1656,7 +1687,9 @@ if DEMO then
 
 	UI.onDrop = function()
 		UI.showHint(false)
-		money_(money + math.random(20, 90))
+		local gain = math.random(20, 90)
+		money_(money + gain)
+		UI.popup("+" .. gain)
 		UI.setDropProgress(0)
 		task.spawn(function()
 			for i = 1, 10 do
