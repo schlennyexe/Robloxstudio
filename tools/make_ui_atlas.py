@@ -283,6 +283,14 @@ ICONS3D = {
 BOTS = {
     "bot_toaster": "#2a3040", "bot_wecker": "#0d4a2a", "bot_katze": "#0c3a5c", "bot_feuerwehr": "#2a1060",
     "bot_drache": "#5a3200", "bot_samurai": "#5a0a18", "bot_satellit": "#5a4a10", "bot_prototyp": "#4a0a5a",
+    "bot_staubsauger": "#2a3040", "bot_gluehbirne": "#2a3040",
+    "bot_gameboy": "#0d4a2a", "bot_amboss": "#0d4a2a",
+    "bot_eule": "#0c3a5c", "bot_hund": "#0c3a5c",
+    "bot_bagger": "#2a1060", "bot_windrad": "#2a1060",
+    "bot_zauberer": "#5a3200", "bot_magnet": "#5a3200",
+    "bot_hacker": "#5a0a18", "bot_schmiedemech": "#5a0a18",
+    "bot_astronaut": "#5a4a10", "bot_sonne": "#5a4a10",
+    "bot_kikern": "#4a0a5a", "bot_zeitwaechter": "#4a0a5a",
 }
 # --- SVG-Platten und Symbole
 tile("close", 448, 224, "red", ico_close, 128)

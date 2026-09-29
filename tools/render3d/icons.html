@@ -130,10 +130,13 @@ MODELS.index = () => {
 
 MODELS.drop = () => {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.SphereGeometry(1.08, 64, 64), mat(0x1fc8ff, { roughness: 0.2, emissive: 0x0a7fa6, emissiveIntensity: 0.3 })));
-  g.add(mesh(new THREE.SphereGeometry(0.18, 20, 20), mat(0xffffff, { roughness: 0.1 }), -0.36, 0.5, 0.78));
-  const ring = mesh(new THREE.TorusGeometry(1.06, 0.11, 20, 80), mat(0xffc21a, { metalness: 0.35, roughness: 0.25 }));
-  ring.rotation.set(1.05, 0.2, 0.55); g.add(ring);
+  const core = mesh(new THREE.IcosahedronGeometry(1.05, 1), mat(0x22d0ff, { roughness: 0.16, flatShading: true, emissive: 0x0b86b8, emissiveIntensity: 0.45 }));
+  g.add(core);
+  g.add(mesh(new THREE.IcosahedronGeometry(0.62, 1), mat(0xbdf6ff, { flatShading: true, emissive: 0x7fe8ff, emissiveIntensity: 0.9, roughness: 0.2 })));
+  const ring = mesh(new THREE.TorusGeometry(1.32, 0.12, 20, 80), mat(0xffc21a, { metalness: 0.35, roughness: 0.25 }));
+  ring.rotation.set(1.15, 0.25, 0.5); g.add(ring);
+  for (const [x, y, z, r] of [[-0.7, 0.85, 0.7, 0.1], [0.95, 0.55, 0.5, 0.07], [0.6, -0.9, 0.7, 0.08]])
+    g.add(mesh(new THREE.SphereGeometry(r, 12, 12), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }), x, y, z));
   g.rotation.set(0.3, -0.4, 0); return g;
 };
 
@@ -323,6 +326,184 @@ MODELS.bot_prototyp = () => {
   }
   g.add(rbox(0.5, 0.08, 0.05, 0.03, mat(0x111827), 0, -0.32, 0.56));
   return finish(g, -0.45, 0.2);
+};
+
+
+// ---- restliche Bots
+const dark = (c = 0x30364a) => mat(c, { roughness: 0.5 });
+MODELS.bot_staubsauger = () => {
+  const g = new THREE.Group(), body = mat(0xa3adc2, { metalness: 0.2 });
+  const dome = mesh(new THREE.SphereGeometry(0.95, 36, 24), body); dome.scale.set(1.15, 0.8, 0.95); g.add(dome);
+  g.add(cyl(0.34, 0.34, 0.16, mat(0xef4444), 0, 0.72, 0));
+  for (const s of [-1, 1]) { const w = cyl(0.3, 0.3, 0.18, dark(), s * 0.85, -0.62, 0.1); w.rotation.z = Math.PI / 2; g.add(w); }
+  eyes(g, 0.1, 0.72, 0.3, 0.19);
+  const hose = new THREE.CatmullRomCurve3([new THREE.Vector3(0.9, -0.1, 0.3), new THREE.Vector3(1.5, -0.4, 0.5), new THREE.Vector3(1.4, -0.85, 0.7)]);
+  g.add(mesh(new THREE.TubeGeometry(hose, 20, 0.14, 10), dark(0x59627a)));
+  g.add(rbox(0.55, 0.12, 0.36, 0.05, mat(0xef4444), 1.25, -0.98, 0.72));
+  return finish(g);
+};
+MODELS.bot_gluehbirne = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.SphereGeometry(0.95, 40, 32), new THREE.MeshPhysicalMaterial({ color: 0xfff2a0, emissive: 0xffd23f, emissiveIntensity: 0.55, roughness: 0.1, clearcoat: 1 }), 0, 0.35, 0));
+  for (let i = 0; i < 3; i++) g.add(cyl(0.42 - i * 0.02, 0.42 - i * 0.02, 0.16, mat(i % 2 ? 0x8b95a8 : 0xb8c1d4, { metalness: 0.5 }), 0, -0.62 - i * 0.2, 0));
+  g.add(cyl(0.16, 0.1, 0.14, dark(), 0, -1.28, 0));
+  eyes(g, 0.4, 0.82, 0.3, 0.19);
+  g.add(rbox(0.3, 0.07, 0.05, 0.03, dark(0x8a5a00), 0, 0.02, 0.92));
+  return finish(g, -0.3, 0.1);
+};
+MODELS.bot_gameboy = () => {
+  const g = new THREE.Group();
+  g.add(rbox(1.25, 1.85, 0.45, 0.18, mat(0x4ade80), 0, 0, 0));
+  g.add(rbox(0.95, 0.75, 0.06, 0.05, dark(0x1f3a2a), 0, 0.42, 0.24));
+  for (const s of [-1, 1]) { g.add(mesh(new THREE.SphereGeometry(0.1, 12, 12), mat(0xb5ffb0, { emissive: 0x7dff8a, emissiveIntensity: 0.9 }), s * 0.22, 0.45, 0.29)); }
+  g.add(rbox(0.36, 0.1, 0.1, 0.03, dark(), -0.32, -0.32, 0.26)); g.add(rbox(0.1, 0.36, 0.1, 0.03, dark(), -0.32, -0.32, 0.26));
+  for (const [x, y] of [[0.3, -0.26], [0.5, -0.4]]) g.add(mesh(new THREE.SphereGeometry(0.12, 14, 14), mat(0xef4444), x, y, 0.27));
+  g.add(rbox(0.3, 0.07, 0.06, 0.03, dark(0x2c8a52), -0.15, -0.78, 0.25).rotateZ(-0.4)); g.add(rbox(0.3, 0.07, 0.06, 0.03, dark(0x2c8a52), 0.2, -0.78, 0.25).rotateZ(-0.4));
+  return finish(g, -0.5, 0.15);
+};
+MODELS.bot_amboss = () => {
+  const g = new THREE.Group(), iron = mat(0x4b5468, { metalness: 0.4, roughness: 0.35 }), green = mat(0x4ade80);
+  g.add(rbox(1.3, 0.34, 0.85, 0.08, iron, 0, -0.75, 0));
+  g.add(rbox(0.7, 0.55, 0.65, 0.1, iron, 0, -0.35, 0));
+  g.add(rbox(1.9, 0.5, 0.9, 0.12, green, 0, 0.1, 0));
+  const horn = cone(0.42, 0.7, green, 1.25, 0.1, 0); horn.rotation.z = -Math.PI / 2; g.add(horn);
+  eyes(g, 0.12, 0.47, 0.35, 0.16);
+  g.add(rbox(0.7, 0.05, 0.6, 0.02, mat(0xb9f8cf), 0, 0.37, 0));
+  return finish(g);
+};
+MODELS.bot_eule = () => {
+  const g = new THREE.Group(), body = mat(0x38bdf8);
+  const b = mesh(new THREE.SphereGeometry(1, 40, 32), body); b.scale.set(1, 1.15, 0.9); g.add(b);
+  const belly = mesh(new THREE.SphereGeometry(0.7, 28, 20), mat(0xc9ecff), 0, -0.25, 0.42); belly.scale.set(1, 1.05, 0.5); g.add(belly);
+  for (const s of [-1, 1]) {
+    const tuft = cone(0.2, 0.5, body, s * 0.55, 1.05, 0); tuft.rotation.z = -s * 0.35; g.add(tuft);
+    g.add(cyl(0.42, 0.42, 0.1, mat(0xffe27a), s * 0.4, 0.35, 0.8).rotateX(Math.PI / 2));
+    g.add(mesh(new THREE.SphereGeometry(0.2, 16, 16), mat(0x111827), s * 0.4, 0.35, 0.88));
+    g.add(mesh(new THREE.SphereGeometry(0.07, 10, 10), mat(0xffffff), s * 0.46, 0.42, 0.98));
+    const wing = mesh(new THREE.SphereGeometry(0.5, 20, 16), mat(0x1c8fd6), s * 1.0, -0.1, 0); wing.scale.set(0.35, 1, 0.6); wing.rotation.z = s * 0.2; g.add(wing);
+    g.add(rbox(0.28, 0.1, 0.34, 0.04, mat(0xffa02e), s * 0.3, -1.08, 0.3));
+  }
+  g.add(cone(0.14, 0.32, mat(0xffa02e), 0, 0.05, 0.98).rotateX(Math.PI / 2));
+  return finish(g, -0.3, 0.1);
+};
+MODELS.bot_hund = () => {
+  const g = new THREE.Group(), body = mat(0x38bdf8);
+  const head = mesh(new THREE.SphereGeometry(0.9, 36, 28), body); head.scale.set(1.05, 0.95, 0.95); g.add(head);
+  for (const s of [-1, 1]) {
+    const ear = mesh(new THREE.SphereGeometry(0.42, 20, 16), mat(0x1c8fd6), s * 0.95, 0.35, 0); ear.scale.set(0.45, 1.15, 0.7); ear.rotation.z = s * 0.35; g.add(ear);
+  }
+  g.add(rbox(0.75, 0.5, 0.55, 0.22, mat(0xd6f1ff), 0, -0.32, 0.78));
+  g.add(mesh(new THREE.SphereGeometry(0.14, 16, 16), dark(0x111827), 0, -0.16, 1.08));
+  g.add(rbox(0.16, 0.24, 0.05, 0.05, mat(0xff7aa8), 0, -0.68, 1.0));
+  eyes(g, 0.28, 0.72, 0.34, 0.17);
+  return finish(g, -0.35, 0.1);
+};
+MODELS.bot_bagger = () => {
+  const g = new THREE.Group(), body = mat(0xa78bfa);
+  for (const s of [-1, 1]) g.add(rbox(0.36, 0.4, 1.7, 0.16, dark(0x2b2f3f), s * 0.62, -0.8, 0));
+  g.add(rbox(1.4, 0.6, 1.3, 0.14, body, 0, -0.3, 0));
+  g.add(rbox(0.95, 0.85, 0.9, 0.16, mat(0xffc21a), -0.12, 0.42, 0));
+  g.add(rbox(0.6, 0.4, 0.06, 0.05, mat(0x9fdcff, { roughness: 0.1 }), -0.12, 0.5, 0.47));
+  eyes(g, 0.5, 0.52, 0.16, 0.11);
+  const arm = rbox(1.5, 0.22, 0.24, 0.08, mat(0xf59e0b), 0.85, 0.35, 0); arm.rotation.z = 0.55; g.add(arm);
+  const arm2 = rbox(0.95, 0.2, 0.22, 0.08, mat(0xf59e0b), 1.7, 0.75, 0); arm2.rotation.z = -0.7; g.add(arm2);
+  g.add(rbox(0.5, 0.42, 0.55, 0.1, mat(0xd97706), 2.08, 0.35, 0));
+  return finish(g, -0.5, 0.2);
+};
+MODELS.bot_windrad = () => {
+  const g = new THREE.Group();
+  g.add(cyl(0.16, 0.34, 1.9, mat(0xe8eef8), 0, -0.4, 0));
+  g.add(cyl(0.7, 0.8, 0.14, mat(0xa78bfa), 0, -1.4, 0));
+  const hub = mesh(new THREE.SphereGeometry(0.5, 32, 24), mat(0xa78bfa), 0, 0.62, 0); g.add(hub);
+  eyes(g, 0.62, 0.42, 0.2, 0.13);
+  const rotor = new THREE.Group(); rotor.position.set(0, 0.62, 0.55);
+  for (let i = 0; i < 3; i++) { const b = rbox(0.24, 1.3, 0.06, 0.05, mat(0xffffff), 0, 0.75, 0); const holder = new THREE.Group(); holder.rotation.z = i * 2.094 + 0.3; holder.add(b); rotor.add(holder); }
+  rotor.add(mesh(new THREE.SphereGeometry(0.18, 16, 16), mat(0xffc21a), 0, 0, 0.05));
+  g.add(rotor);
+  return finish(g, -0.5, 0.1);
+};
+MODELS.bot_zauberer = () => {
+  const g = new THREE.Group();
+  g.add(cone(0.9, 1.5, mat(0xfbbf24), 0, -0.75, 0));                                    // Robe
+  g.add(mesh(new THREE.SphereGeometry(0.55, 28, 20), mat(0xffe0c2), 0, 0.15, 0.1));
+  g.add(cone(0.42, 0.7, mat(0xf3f4f6), 0, -0.2, 0.45).rotateX(Math.PI));                // Bart
+  g.add(mesh(new THREE.TorusGeometry(0.72, 0.09, 12, 40), mat(0x6d3fd6), 0, 0.55, 0).rotateX(Math.PI / 2));
+  g.add(cone(0.55, 1.2, mat(0x7c4dff), 0, 1.25, 0));
+  g.add(mesh(new THREE.SphereGeometry(0.12, 12, 12), mat(0xffd23f, { emissive: 0xffc200, emissiveIntensity: 0.8 }), 0.05, 1.7, 0.2));
+  eyes(g, 0.25, 0.55, 0.2, 0.11);
+  g.add(cyl(0.04, 0.04, 1.4, mat(0x8b5a2b), 1.0, -0.2, 0.3));
+  g.add(mesh(new THREE.SphereGeometry(0.14, 14, 14), mat(0xfff2a0, { emissive: 0xffe066, emissiveIntensity: 1 }), 1.0, 0.55, 0.3));
+  return finish(g, -0.4, 0.12);
+};
+MODELS.bot_magnet = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.TorusGeometry(0.8, 0.34, 20, 48, Math.PI), mat(0xef4444), 0, 0, 0));
+  for (const s of [-1, 1]) {
+    g.add(cyl(0.34, 0.34, 0.8, mat(0xef4444), s * 0.8, -0.4, 0));
+    g.add(cyl(0.345, 0.345, 0.34, mat(0xe8eef8, { metalness: 0.4 }), s * 0.8, -0.95, 0));
+  }
+  eyes(g, 0.35, 0.34, 0.26, 0.14, 0xffffff);
+  g.add(rbox(0.3, 0.06, 0.05, 0.03, dark(), 0, 0.02, 0.36));
+  g.rotation.set(0.1, -0.5, 0); return g;
+};
+MODELS.bot_hacker = () => {
+  const g = new THREE.Group(), hood = mat(0xfb4b6e);
+  g.add(rbox(1.3, 1.0, 0.9, 0.24, hood, 0, -0.55, 0));
+  const head = mesh(new THREE.SphereGeometry(0.85, 36, 24), hood, 0, 0.4, 0); head.scale.set(1.05, 0.95, 0.95); g.add(head);
+  g.add(rbox(0.95, 0.62, 0.1, 0.1, mat(0x0b1220), 0, 0.4, 0.72));
+  for (const s of [-1, 1]) g.add(mesh(new THREE.SphereGeometry(0.11, 12, 12), mat(0x4dff8a, { emissive: 0x2dff6a, emissiveIntensity: 1 }), s * 0.26, 0.48, 0.79));
+  g.add(rbox(0.4, 0.06, 0.04, 0.02, mat(0x4dff8a, { emissive: 0x2dff6a, emissiveIntensity: 1 }), 0, 0.22, 0.79));
+  g.add(rbox(1.0, 0.1, 0.62, 0.04, dark(0x1f2433), 0, -1.12, 0.55));
+  return finish(g);
+};
+MODELS.bot_schmiedemech = () => {
+  const g = new THREE.Group(), body = mat(0xfb4b6e);
+  g.add(rbox(1.5, 1.3, 0.95, 0.24, body, 0, -0.1, 0));
+  g.add(rbox(0.8, 0.6, 0.08, 0.06, mat(0xff7a1a, { emissive: 0xff5a00, emissiveIntensity: 0.9 }), 0, -0.2, 0.5));
+  g.add(rbox(0.9, 0.62, 0.8, 0.2, mat(0x8b3a4c), 0, 0.85, 0));
+  eyes(g, 0.86, 0.42, 0.24, 0.12, 0xffee66);
+  for (const s of [-1, 1]) g.add(rbox(0.45, 0.4, 0.55, 0.12, mat(0x8b3a4c), s * 1.0, 0.45, 0));
+  g.add(cyl(0.07, 0.07, 1.4, mat(0x8b5a2b), 1.3, 0.4, 0.4));
+  g.add(rbox(0.7, 0.42, 0.42, 0.08, mat(0x6b7388, { metalness: 0.5 }), 1.3, 1.1, 0.4));
+  return finish(g, -0.5, 0.12);
+};
+MODELS.bot_astronaut = () => {
+  const g = new THREE.Group(), suit = mat(0xfff1a8);
+  g.add(rbox(1.15, 1.0, 0.8, 0.26, suit, 0, -0.75, 0));
+  g.add(rbox(0.75, 1.0, 0.4, 0.1, mat(0xdcdff0), 0, -0.6, -0.55));
+  g.add(mesh(new THREE.SphereGeometry(0.85, 40, 28), mat(0xffffff), 0, 0.35, 0));
+  const visor = mesh(new THREE.SphereGeometry(0.66, 32, 24), new THREE.MeshPhysicalMaterial({ color: 0x1b2a5c, roughness: 0.08, clearcoat: 1, envMapIntensity: 1.2 }), 0, 0.35, 0.42); visor.scale.set(1.05, 0.8, 0.6); g.add(visor);
+  for (const s of [-1, 1]) g.add(mesh(new THREE.SphereGeometry(0.09, 10, 10), mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.9 }), s * 0.24, 0.4, 0.86));
+  g.add(rbox(0.3, 0.3, 0.06, 0.03, mat(0xef4444), 0.3, -0.72, 0.42));
+  g.add(cyl(0.03, 0.03, 0.5, mat(0xdcdff0), -0.3, 1.2, 0)); g.add(mesh(new THREE.SphereGeometry(0.07, 10, 10), mat(0xef4444), -0.3, 1.5, 0));
+  return finish(g, -0.35, 0.12);
+};
+MODELS.bot_sonne = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.SphereGeometry(0.9, 40, 32), mat(0xffe15a, { emissive: 0xffa800, emissiveIntensity: 0.5 })));
+  for (let i = 0; i < 10; i++) { const a = i * Math.PI * 2 / 10; const r = cone(0.2, 0.55, mat(0xffb020, { emissive: 0xff8a00, emissiveIntensity: 0.4 }), Math.cos(a) * 1.25, Math.sin(a) * 1.25, 0); r.rotation.z = a - Math.PI / 2; g.add(r); }
+  eyes(g, 0.15, 0.78, 0.3, 0.17);
+  g.add(mesh(new THREE.TorusGeometry(0.28, 0.05, 10, 24, Math.PI), dark(0x8a4a00), 0, -0.2, 0.86).rotateZ(Math.PI));
+  return finish(g, -0.25, 0.08);
+};
+MODELS.bot_kikern = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.IcosahedronGeometry(1.0, 1), mat(0xe879f9, { flatShading: true, emissive: 0x9a2bb0, emissiveIntensity: 0.5, roughness: 0.2 })));
+  g.add(cyl(0.5, 0.5, 0.12, mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.4 }), 0, 0, 0.95).rotateX(Math.PI / 2));
+  g.add(cyl(0.3, 0.3, 0.14, mat(0x22d3ee, { emissive: 0x0aa0c0, emissiveIntensity: 0.9 }), 0, 0, 1.0).rotateX(Math.PI / 2));
+  g.add(cyl(0.13, 0.13, 0.16, dark(0x111827), 0, 0, 1.04).rotateX(Math.PI / 2));
+  const ring = mesh(new THREE.TorusGeometry(1.3, 0.09, 14, 60), mat(0x22d3ee, { emissive: 0x0a90b0, emissiveIntensity: 0.6 })); ring.rotation.set(1.2, 0.3, 0); g.add(ring);
+  return finish(g, -0.3, 0.15);
+};
+MODELS.bot_zeitwaechter = () => {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.TorusGeometry(1.0, 0.2, 20, 64), mat(0xffc21a, { metalness: 0.35, roughness: 0.25 })));
+  g.add(cyl(0.88, 0.88, 0.14, mat(0xf5d0ff), 0, 0, 0).rotateX(Math.PI / 2));
+  for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; g.add(rbox(i % 3 ? 0.06 : 0.1, i % 3 ? 0.14 : 0.2, 0.05, 0.02, dark(0x4a2c7a), Math.cos(a) * 0.72, Math.sin(a) * 0.72, 0.1).rotateZ(a - Math.PI / 2)); }
+  const h1 = rbox(0.09, 0.5, 0.05, 0.03, dark(0x2a1060), 0, 0.22, 0.14); g.add(h1); const h2 = rbox(0.09, 0.34, 0.05, 0.03, dark(0x2a1060), 0.17, -0.02, 0.14); h2.rotation.z = -1.2; g.add(h2);
+  eyes(g, -0.3, 0.16, 0.24, 0.11);
+  for (const s of [-1, 1]) g.add(mesh(new THREE.OctahedronGeometry(0.28), mat(0x66d9ff, { emissive: 0x22b8ff, emissiveIntensity: 0.7, flatShading: true }), s * 1.35, 0, 0));
+  return finish(g, -0.35, 0.12);
 };
 
 // ---------------------------------------------------------------- Rendern

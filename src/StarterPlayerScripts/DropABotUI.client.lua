@@ -69,6 +69,22 @@ local BSPR = {
 	bot_samurai = { 0, 192, 192, 192 },
 	bot_satellit = { 192, 192, 192, 192 },
 	bot_prototyp = { 384, 192, 192, 192 },
+	bot_staubsauger = { 576, 192, 192, 192 },
+	bot_gluehbirne = { 768, 192, 192, 192 },
+	bot_gameboy = { 0, 384, 192, 192 },
+	bot_amboss = { 192, 384, 192, 192 },
+	bot_eule = { 384, 384, 192, 192 },
+	bot_hund = { 576, 384, 192, 192 },
+	bot_bagger = { 768, 384, 192, 192 },
+	bot_windrad = { 0, 576, 192, 192 },
+	bot_zauberer = { 192, 576, 192, 192 },
+	bot_magnet = { 384, 576, 192, 192 },
+	bot_hacker = { 576, 576, 192, 192 },
+	bot_schmiedemech = { 768, 576, 192, 192 },
+	bot_astronaut = { 0, 768, 192, 192 },
+	bot_sonne = { 192, 768, 192, 192 },
+	bot_kikern = { 384, 768, 192, 192 },
+	bot_zeitwaechter = { 576, 768, 192, 192 },
 }
 
 if ATLAS_ID:match("^%d+$") then
@@ -79,6 +95,17 @@ if BOT_ATLAS_ID:match("^%d+$") then
 end
 local useAtlas = ATLAS_ID ~= ""
 local useBots = BOT_ATLAS_ID ~= ""
+-- alle 24 Bots: { Schlüssel, Name, Klasse, Fähigkeit oder Beruf }, je drei pro Seltenheit (Reihenfolge wie RARITY)
+local BOT_INFO = {
+	{ "bot_toaster", "Toaster-Bot", "Verteidiger", "Toast-Kanone" }, { "bot_staubsauger", "Staubsauger-Bot", "Arbeiter", "Bauen" }, { "bot_gluehbirne", "Glühbirnen-Bot", "Arbeiter", "Kraftwerk" },
+	{ "bot_wecker", "Wecker-Bot", "Verteidiger", "Schallwelle" }, { "bot_gameboy", "Gameboy-Bot", "Arbeiter", "Programmieren" }, { "bot_amboss", "Amboss-Bot", "Arbeiter", "Schmiede" },
+	{ "bot_katze", "Robo-Katze", "Verteidiger", "Blitzkrallen" }, { "bot_eule", "Robo-Eule", "Arbeiter", "Labor" }, { "bot_hund", "Robo-Hund", "Verteidiger", "Jagdbiss" },
+	{ "bot_feuerwehr", "Feuerwehr-Bot", "Verteidiger", "Wasserstrahl" }, { "bot_bagger", "Bagger-Bot", "Arbeiter", "Bauen" }, { "bot_windrad", "Windrad-Bot", "Arbeiter", "Kraftwerk" },
+	{ "bot_drache", "Drachen-Bot", "Verteidiger", "Feueratem" }, { "bot_zauberer", "Zauberer-Bot", "Arbeiter", "Labor" }, { "bot_magnet", "Magnet-Bot", "Verteidiger", "Magnetfeld" },
+	{ "bot_samurai", "Samurai-Mech", "Verteidiger", "Katana" }, { "bot_hacker", "Hacker-Bot", "Arbeiter", "Programmieren" }, { "bot_schmiedemech", "Schmiede-Mech", "Arbeiter", "Schmiede" },
+	{ "bot_satellit", "Satelliten-Bot", "Verteidiger", "Orbital-Laser" }, { "bot_astronaut", "Astronauten-Bot", "Arbeiter", "Labor" }, { "bot_sonne", "Sonnen-Bot", "Arbeiter", "Kraftwerk" },
+	{ "bot_prototyp", "Prototyp Null", "Verteidiger", "Glitch-Welle" }, { "bot_kikern", "KI-Kern", "Arbeiter", "alle Stationen" }, { "bot_zeitwaechter", "Zeit-Wächter", "Verteidiger", "Zeitfeld" },
+}
 -- ein Bot je Seltenheit (gleiche Reihenfolge wie RARITY)
 local BOT_KEYS = { "bot_toaster", "bot_wecker", "bot_katze", "bot_feuerwehr", "bot_drache", "bot_samurai", "bot_satellit", "bot_prototyp" }
 
@@ -1218,6 +1245,9 @@ local function buildRows(key, rows)
 				Name = "Btn", Size = UDim2.fromOffset(124, 54), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, -2),
 				pal = r.btnPal or P.gold, radius = 12, depth = 5, spr = r.btnSpr or "gold2", text = r.btn, textSize = 20, z = 4, burst = true,
 				onClick = function()
+					if key == "teleport" and r.id == "bots" then
+						UI.openWindow("bots")
+					end
 					if UI.onRowAction then
 						UI.onRowAction(key, r.id)
 					end
@@ -1261,6 +1291,14 @@ do
 			{ id = "invasion", emoji = "🛡️", title = "Invasion", sub = "Verteidiger schützen den Tresor", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
 			{ id = "bots", emoji = "🤖", title = "Bots", sub = "Deine gesammelten Bots ansehen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
 		} },
+		{ key = "bots", title = "Bots", emoji = "🤖", pal = P.purple, cols = 2, rows = (function()
+			local out = {}
+			for i, b in ipairs(BOT_INFO) do
+				local rar = RARITY[math.ceil(i / 3)]
+				out[i] = { id = b[1], dot = rar.color, bot = b[1], title = b[2], sub = b[3] .. " · " .. b[4], card = "dark4" }
+			end
+			return out
+		end)() },
 		{ key = "index", title = "Index", emoji = "📖", pal = P.blue, cols = 2, rows = (function()
 			local out = {}
 			for i, r in ipairs(RARITY) do

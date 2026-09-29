@@ -79,10 +79,10 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 
 ### Bot-Bilder (optional)
 
-`assets/ui/atlas_bots.png` enthält acht 3D-Bots (einer pro Seltenheit: Toaster, Wecker, Katze, Feuerwehr, Drache,
-Samurai, Satellit, Prototyp). Genauso hochladen und oben `local BOT_ATLAS_ID = "..."` eintragen.
-Sie erscheinen im Index und im Banner (`UI.banner({ bot = "bot_samurai", ... })`). Weitere Bots:
-Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.
+`assets/ui/atlas_bots.png` enthält alle 24 3D-Bots (drei pro Seltenheit, wie im Prototyp). Genauso hochladen und oben
+`local BOT_ATLAS_ID = "..."` eintragen. Sie erscheinen im Index, im neuen **Bots-Fenster** (Teleport › Bots) und im
+Banner (`UI.banner({ bot = "bot_samurai", ... })`). Für eigene Stellen: `shared.DropABotUI.botSprite(parent, "bot_katze", { sz = UDim2.fromOffset(96, 96) })`.
+Weitere Bots: Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.
 
 ## Animationen
 
