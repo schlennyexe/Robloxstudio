@@ -1064,6 +1064,11 @@ local function makeWindow(cfg)
 		iconBox.Size = UDim2.fromOffset(56, 56)
 		iconBox.Position = UDim2.fromOffset(10, 4)
 		sprite(iconBox, cfg.key, { z = 3 })
+	elseif useBots and cfg.botIcon and BSPR[cfg.botIcon] then
+		iconBox.BackgroundTransparency = 1
+		iconBox.Size = UDim2.fromOffset(56, 56)
+		iconBox.Position = UDim2.fromOffset(10, 4)
+		botSprite(iconBox, cfg.botIcon, { z = 3 })
 	else
 		round(iconBox, 12)
 		outline(iconBox, 3)
@@ -1387,7 +1392,7 @@ do
 			{ id = "invasion", emoji = "🛡️", bot = "bot_samurai", title = "Invasion", sub = "Verteidiger schützen den Tresor", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
 			{ id = "bots", emoji = "🤖", bot = "bot_toaster", title = "Bots", sub = "Deine gesammelten Bots ansehen", card = "green4", btn = "Los", btnSpr = "blue2", btnPal = P.blue },
 		} },
-		{ key = "bots", title = "Bots", emoji = "🤖", pal = P.purple, cols = 2, rows = (function()
+		{ key = "bots", title = "Bots", emoji = "🤖", botIcon = "bot_toaster", pal = P.purple, cols = 2, rows = (function()
 			local out = {}
 			for i, b in ipairs(BOT_INFO) do
 				local rar = RARITY[math.ceil(i / 3)]
@@ -1404,7 +1409,7 @@ do
 		end)() },
 	}
 	for _, d in ipairs(defs) do
-		local w = makeWindow({ key = d.key, title = d.title, emoji = d.emoji, pal = d.pal, iconPal = d.pal, width = 780, height = 500 })
+		local w = makeWindow({ key = d.key, title = d.title, emoji = d.emoji, botIcon = d.botIcon, pal = d.pal, iconPal = d.pal, width = 780, height = 500 })
 		local scroll = make("ScrollingFrame", {
 			Name = "Rows", BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -28, 1, -18),
 			CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 8,
