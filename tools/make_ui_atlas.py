@@ -260,23 +260,27 @@ def plate(name, x, y, w, h, colour):
 def small(name, x, y, fn, size=96):
     SPRITES.append((name, x, y, size, size, svg_wrap(size, size, 128, 128, fn())))
 
-# --- 3D-Icons (ohne Platte), siehe tools/icons3d.py. name: (Größe, Konturfarbe, Art)
-# Art: "tile" = unten bleibt Platz für die Beschriftung, "icon" = frei stehend, "crop" = eng zugeschnitten (Größe = Breite)
-# Die Position im Atlas wird automatisch gesucht (pack), die Ausschnitte landen in atlas_rects.lua.
+# --- Fertige Button-Bilder (aus deinem Buttons.zip, freigestellt von tools/import_buttons.py -> assets/ui/buttons/)
+# Atlas-Name: (Datei ohne .png, Größe, Art)
+# Art: "tile" = Symbol sitzt oben in der Zelle, unten bleibt Platz für die Beschriftung; "icon" = mittig; "crop" = ganze Breite, Höhe nach Seitenverhältnis
+BUTTONS = {
+    "upgrades": ("UpgradeButton", 192, "tile"),
+    "aufgaben": ("AufgabenButton", 192, "tile"),
+    "forschung": ("ForschungButton", 192, "tile"),
+    "shop": ("ShopButton", 192, "tile"),
+    "index": ("IndexButton", 192, "tile"),
+    "rebirth": ("RebirthButton", 192, "tile"),
+    "teleport": ("TeleportButton", 192, "tile"),
+    "backpack": ("BackpackButton", 192, "tile"),
+    "drop": ("DropButton", 208, "crop"),
+    "screws": ("SchraubenSymbolGelb", 128, "icon"),
+    "screws_p": ("SchraubenSymbolLila", 128, "icon"),
+    "nut": ("EinzelneSchraubenSymbolGelb", 80, "icon"),
+    "gear": ("EinzelneSchraubenSymbolLila", 96, "icon"),
+    "clover": ("LuckSymbol", 112, "icon"),
+}
+# --- 3D-Icons (ohne Platte), siehe tools/icons3d.py. name: (Größe, Konturfarbe, Art). Position im Atlas wird automatisch gesucht.
 ICONS3D = {
-    "upgrades": (192, "#0a3a12", "tile"),
-    "aufgaben": (192, "#2a1408", "tile"),
-    "forschung": (192, "#0e2a5a", "tile"),
-    "shop": (192, "#4a0620", "tile"),
-    "index": (192, "#0a1c5a", "tile"),
-    "rebirth": (192, "#3a0a1a", "tile"),
-    "teleport": (192, "#0c1e5a", "tile"),
-    "backpack": (192, "#4a0e0a", "tile"),
-    "drop": (208, "#141a48", "crop"),
-    "screws": (128, "#5a3200", "icon"),
-    "nut": (80, "#5a3200", "icon"),
-    "gear": (96, "#2a0a5a", "icon"),
-    "clover": (112, "#0d3a14", "icon"),
     "ice": (96, "#1c3a66", "icon"),
     "potion_g": (96, "#0e3a44", "icon"),
     "potion_y": (96, "#3a2a08", "icon"),
@@ -321,6 +325,19 @@ plate("gold4", 512, 896, 512, 128, "gold")
 
 PACK_H = 640    # oberhalb davon liegen Icons, darunter die Platten
 
+def place(src, size, kind):
+    """Fertiges Bild in seine Atlas-Zelle setzen (Seitenverhältnis bleibt)."""
+    w, h = size
+    cell = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    if kind == "crop":
+        cell.alpha_composite(src.resize((w, h), Image.LANCZOS)); return cell
+    box = round(w * 0.79) if kind == "tile" else w - 4                       # Kacheln: Platz für die Beschriftung unten
+    k = min(box / src.width, box / src.height)
+    im = src.resize((max(1, round(src.width * k)), max(1, round(src.height * k))), Image.LANCZOS)
+    cy = round(h * 0.425) if kind == "tile" else h // 2
+    cell.alpha_composite(im, ((w - im.width) // 2, cy - im.height // 2))
+    return cell
+
 def pack(items, fixed=()):
     """Einfacher Platzsucher: items = [(name, w, h)], fixed = schon belegte (x, y, w, h). Gibt {name: (x, y)} zurück."""
     import numpy as np
@@ -359,6 +376,11 @@ def main():
     sizes = {}
     for n, (sz, col, kind) in ICONS3D.items():
         sizes[n] = (sz, round(sz * ims[n].height / ims[n].width)) if kind == "crop" else (sz, sz)
+    cells = {}
+    for n, (file, sz, kind) in BUTTONS.items():
+        src = Image.open(os.path.join(OUT, "buttons", file + ".png")).convert("RGBA")
+        sizes[n] = (sz, round(sz * src.height / src.width)) if kind == "crop" else (sz, sz)
+        cells[n] = place(src, sizes[n], kind)
     for n, (w, col) in TOGGLES.items():
         sizes[n] = (w, round(w * ims[n].height / ims[n].width))
     # 2) Platz suchen: kleine SVG-Symbole (x = None) und alle 3D-Icons
@@ -380,7 +402,7 @@ def main():
         br.close()
     # 4) 3D-Icons einsetzen
     for n, (w, h) in sizes.items():
-        atlas.alpha_composite(ims[n].resize((w, h), Image.LANCZOS), pos[n])
+        atlas.alpha_composite(cells[n] if n in cells else ims[n].resize((w, h), Image.LANCZOS), pos[n])
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
     with open(os.path.join(OUT, "atlas_rects.lua"), "w", encoding="utf8") as f:
         f.write("local SPR = {\n")

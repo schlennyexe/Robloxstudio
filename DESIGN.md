@@ -74,8 +74,12 @@ freistehende 3D-Icons ohne Platte, Beschriftung mit dicker Kontur darüber.
 3. Im LocalScript oben `local ATLAS_ID = "123456789"` (die kopierte Zahl) eintragen.
 4. Play. Falls die Knöpfe weiß bleiben, ist das Bild noch in der Prüfung oder die ID falsch.
 
-Die Bilder werden von `tools/make_ui_atlas.py` erzeugt: Platten als Vektorgrafik, Icons als 3D-Modelle (three.js, `tools/render3d`, Kontur in `tools/icons3d.py`). Einmalig `cd tools/render3d && npm install`. Farben, Icons und
-Größen lassen sich dort ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
+Die Bilder werden von `tools/make_ui_atlas.py` erzeugt. Die großen Buttons und Währungs-Symbole sind **deine fertigen Bilder**
+(`assets/ui/buttons/*.png`, freigestellt aus den JPGs von `Buttons.zip` mit `python3 tools/import_buttons.py <Ordner>`):
+Upgrade, Aufgaben, Forschung, Shop, Index, Rebirth, Teleport, Backpack, Drop, Schrauben gelb/lila (Haufen und einzeln), Luck.
+Platten sind Vektorgrafik, Eiswürfel, Tränke, Schloss, Stern, Hand und AUTO-Schalter sind 3D-Modelle (three.js, `tools/render3d`,
+Kontur in `tools/icons3d.py`; einmalig `cd tools/render3d && npm install`). Ein Button-Bild austauschen: neue Datei in
+`assets/ui/buttons/` mit gleichem Namen ablegen. Größen lassen sich in `BUTTONS` und `ICONS3D` ändern: `python3 tools/make_ui_atlas.py` erzeugt `atlas.png` und `atlas_rects.lua` neu.
 Die Plätze im Bild werden automatisch gesucht. Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rects.lua` ersetzen.
 
 ### Bot-Bilder (optional)

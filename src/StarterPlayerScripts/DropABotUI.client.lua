@@ -44,8 +44,8 @@ local SOUND_VOLUME = { click = 0.22, buy = 0.3, hover = 0.12 }
 -- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
 local SPR = {
 	close = { 912, 304, 96, 96 },
-	plus = { 784, 320, 96, 96 },
-	glint = { 576, 352, 96, 96 },
+	plus = { 576, 344, 96, 96 },
+	glint = { 672, 344, 96, 96 },
 	gold2 = { 0, 640, 256, 128 },
 	gray2 = { 256, 640, 256, 128 },
 	green2 = { 512, 640, 256, 128 },
@@ -54,6 +54,13 @@ local SPR = {
 	dark4 = { 512, 768, 512, 128 },
 	gray4 = { 0, 896, 512, 128 },
 	gold4 = { 512, 896, 512, 128 },
+	ice = { 0, 384, 96, 96 },
+	potion_g = { 96, 384, 96, 96 },
+	potion_y = { 192, 384, 96, 96 },
+	potion_p = { 288, 384, 96, 96 },
+	lock = { 384, 384, 96, 96 },
+	star = { 480, 384, 96, 96 },
+	hand = { 912, 400, 96, 96 },
 	upgrades = { 0, 0, 192, 192 },
 	aufgaben = { 192, 0, 192, 192 },
 	forschung = { 384, 0, 192, 192 },
@@ -62,20 +69,14 @@ local SPR = {
 	rebirth = { 0, 192, 192, 192 },
 	teleport = { 192, 192, 192, 192 },
 	backpack = { 384, 192, 192, 192 },
-	drop = { 576, 192, 208, 159 },
+	drop = { 576, 192, 208, 150 },
 	screws = { 784, 192, 128, 128 },
-	nut = { 768, 416, 80, 80 },
-	gear = { 672, 352, 96, 96 },
+	screws_p = { 784, 320, 128, 128 },
+	nut = { 672, 440, 80, 80 },
+	gear = { 576, 440, 96, 96 },
 	clover = { 912, 192, 112, 112 },
-	ice = { 0, 384, 96, 96 },
-	potion_g = { 96, 384, 96, 96 },
-	potion_y = { 192, 384, 96, 96 },
-	potion_p = { 288, 384, 96, 96 },
-	lock = { 384, 384, 96, 96 },
-	star = { 480, 384, 96, 96 },
-	hand = { 880, 400, 96, 96 },
 	toggle_off = { 0, 480, 112, 62 },
-	toggle_on = { 576, 448, 112, 64 },
+	toggle_on = { 752, 448, 112, 64 },
 }
 
 -- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
@@ -988,7 +989,7 @@ make("UIListLayout", {
 local dropFill, dropHint, autoRecolor, dropFace
 do
 	local _, face = chunky(root, {
-		Name = "Drop", Size = useAtlas and UDim2.fromOffset(k(190), k(145)) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
+		Name = "Drop", Size = useAtlas and UDim2.fromOffset(k(190), k(137)) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
 		Position = useAtlas and UDim2.new(0.5, 0, 1, -k(84)) or UDim2.new(0.5, 0, 1, -24),
 		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
 		onClick = function()
@@ -1072,7 +1073,7 @@ do
 
 	if useAtlas and SPR.hand then
 		dropHint = sprite(root, "hand", {
-			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -(k(84) + k(145) + 6)), z = 5,
+			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -(k(84) + k(137) + 6)), z = 5,
 		})
 	else
 		dropHint = glyph(root, "👇", 64, {
@@ -1081,7 +1082,7 @@ do
 	end
 	dropHint.Visible = false
 	TweenService:Create(dropHint, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-		Position = UDim2.new(0.5, 0, 1, useAtlas and -(k(84) + k(145) + 24) or -146),
+		Position = UDim2.new(0.5, 0, 1, useAtlas and -(k(84) + k(137) + 24) or -146),
 	}):Play()
 end
 
