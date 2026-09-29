@@ -360,15 +360,34 @@ local function botSprite(parent, key, o)
 	}, parent)
 end
 
+local function soundId(id)
+	if id:match("^%d+$") then
+		return "rbxassetid://" .. id
+	end
+	return id
+end
+
+-- Sounds werden einmal geprüft; was nicht lädt, bleibt stumm (kein Warn-Spam bei jedem Klick)
+local soundOk = {}
+for key, id in pairs(SOUND_IDS) do
+	if id ~= "" then
+		task.spawn(function()
+			local probe = Instance.new("Sound")
+			probe.SoundId = soundId(id)
+			ContentProvider:PreloadAsync({ probe }, function(_, status)
+				soundOk[key] = status == Enum.AssetFetchStatus.Success
+			end)
+			probe:Destroy()
+		end)
+	end
+end
+
 local function playSound(key)
 	local id = SOUND_IDS[key]
-	if not id or id == "" then
+	if not id or id == "" or not soundOk[key] then
 		return
 	end
-	if id:match("^%d+$") then
-		id = "rbxassetid://" .. id
-	end
-	local snd = make("Sound", { SoundId = id, Volume = 0.5 }, SoundService)
+	local snd = make("Sound", { SoundId = soundId(id), Volume = 0.5 }, SoundService)
 	snd:Play()
 	task.delay(3, function()
 		snd:Destroy()
