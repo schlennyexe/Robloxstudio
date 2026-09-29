@@ -61,30 +61,42 @@ local SPR = {
 
 -- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
 local BSPR = {
-	bot_toaster = { 0, 0, 192, 192 },
-	bot_wecker = { 192, 0, 192, 192 },
-	bot_katze = { 384, 0, 192, 192 },
-	bot_feuerwehr = { 576, 0, 192, 192 },
-	bot_drache = { 768, 0, 192, 192 },
-	bot_samurai = { 0, 192, 192, 192 },
-	bot_satellit = { 192, 192, 192, 192 },
-	bot_prototyp = { 384, 192, 192, 192 },
-	bot_staubsauger = { 576, 192, 192, 192 },
-	bot_gluehbirne = { 768, 192, 192, 192 },
-	bot_gameboy = { 0, 384, 192, 192 },
-	bot_amboss = { 192, 384, 192, 192 },
-	bot_eule = { 384, 384, 192, 192 },
-	bot_hund = { 576, 384, 192, 192 },
-	bot_bagger = { 768, 384, 192, 192 },
-	bot_windrad = { 0, 576, 192, 192 },
-	bot_zauberer = { 192, 576, 192, 192 },
-	bot_magnet = { 384, 576, 192, 192 },
-	bot_hacker = { 576, 576, 192, 192 },
-	bot_schmiedemech = { 768, 576, 192, 192 },
-	bot_astronaut = { 0, 768, 192, 192 },
-	bot_sonne = { 192, 768, 192, 192 },
-	bot_kikern = { 384, 768, 192, 192 },
-	bot_zeitwaechter = { 576, 768, 192, 192 },
+	bot_toaster = { 0, 0, 160, 160 },
+	bot_wecker = { 160, 0, 160, 160 },
+	bot_katze = { 320, 0, 160, 160 },
+	bot_feuerwehr = { 480, 0, 160, 160 },
+	bot_drache = { 640, 0, 160, 160 },
+	bot_samurai = { 800, 0, 160, 160 },
+	bot_satellit = { 0, 160, 160, 160 },
+	bot_prototyp = { 160, 160, 160, 160 },
+	bot_staubsauger = { 320, 160, 160, 160 },
+	bot_gluehbirne = { 480, 160, 160, 160 },
+	bot_gameboy = { 640, 160, 160, 160 },
+	bot_amboss = { 800, 160, 160, 160 },
+	bot_eule = { 0, 320, 160, 160 },
+	bot_hund = { 160, 320, 160, 160 },
+	bot_bagger = { 320, 320, 160, 160 },
+	bot_windrad = { 480, 320, 160, 160 },
+	bot_zauberer = { 640, 320, 160, 160 },
+	bot_magnet = { 800, 320, 160, 160 },
+	bot_hacker = { 0, 480, 160, 160 },
+	bot_schmiedemech = { 160, 480, 160, 160 },
+	bot_astronaut = { 320, 480, 160, 160 },
+	bot_sonne = { 480, 480, 160, 160 },
+	bot_kikern = { 640, 480, 160, 160 },
+	bot_zeitwaechter = { 800, 480, 160, 160 },
+	up_kerne = { 0, 640, 160, 160 },
+	up_tempo = { 160, 640, 160, 160 },
+	up_glueck = { 320, 640, 160, 160 },
+	up_reihen = { 480, 640, 160, 160 },
+	up_plaetze = { 640, 640, 160, 160 },
+	up_planGlueck = { 800, 640, 160, 160 },
+	up_werkzeug = { 0, 800, 160, 160 },
+	up_scanner = { 160, 800, 160, 160 },
+	up_schnellwurf = { 320, 800, 160, 160 },
+	up_sockel = { 480, 800, 160, 160 },
+	up_splitter = { 640, 800, 160, 160 },
+	up_goldpin = { 800, 800, 160, 160 },
 }
 
 if ATLAS_ID:match("^%d+$") then
@@ -1150,10 +1162,16 @@ local function upgradeCard(u)
 	end
 
 	local ic = make("Frame", { BackgroundColor3 = C.white, Position = UDim2.fromOffset(14, 14), Size = UDim2.fromOffset(64, 64), ZIndex = 2 }, card)
-	round(ic, 12)
-	outline(ic, 3)
-	vgrad(ic, u.state == "max" and { Color3.fromRGB(196, 128, 12), Color3.fromRGB(128, 76, 0) } or { Color3.fromRGB(46, 126, 42), Color3.fromRGB(24, 82, 30) })
-	glyph(ic, u.emoji or "⭐", 36)
+	local iconKey = u.icon or ("up_" .. tostring(u.id))
+	if useBots and BSPR[iconKey] then
+		ic.BackgroundTransparency = 1
+		botSprite(ic, iconKey, { sz = UDim2.fromOffset(78, 78), pos = UDim2.fromOffset(-7, -7), z = 3 })
+	else
+		round(ic, 12)
+		outline(ic, 3)
+		vgrad(ic, u.state == "max" and { Color3.fromRGB(196, 128, 12), Color3.fromRGB(128, 76, 0) } or { Color3.fromRGB(46, 126, 42), Color3.fromRGB(24, 82, 30) })
+		glyph(ic, u.emoji or "⭐", 36)
+	end
 
 	local badge = make("Frame", {
 		BackgroundColor3 = C.white, Position = UDim2.fromOffset(-8, -8), Size = UDim2.fromOffset(44, 44), ZIndex = 5,

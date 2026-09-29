@@ -80,7 +80,8 @@ Danach den Block `local SPR = { ... }` im Skript durch den Inhalt von `atlas_rec
 
 ### Bot-Bilder (optional)
 
-`assets/ui/atlas_bots.png` enthält alle 24 3D-Bots (drei pro Seltenheit, wie im Prototyp). Genauso hochladen und oben
+`assets/ui/atlas_bots.png` enthält alle 24 3D-Bots (drei pro Seltenheit, wie im Prototyp) und 12 Upgrade-Symbole
+(`up_kerne`, `up_tempo`, ... werden in den Upgrade-Karten automatisch über die Upgrade-ID gewählt). Genauso hochladen und oben
 `local BOT_ATLAS_ID = "..."` eintragen. Sie erscheinen im Index, im neuen **Bots-Fenster** (Teleport › Bots) und im
 Banner (`UI.banner({ bot = "bot_samurai", ... })`). Für eigene Stellen: `shared.DropABotUI.botSprite(parent, "bot_katze", { sz = UDim2.fromOffset(96, 96) })`.
 Weitere Bots: Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`tools/make_ui_atlas.py`) eintragen.

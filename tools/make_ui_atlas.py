@@ -292,6 +292,12 @@ BOTS = {
     "bot_astronaut": "#5a4a10", "bot_sonne": "#5a4a10",
     "bot_kikern": "#4a0a5a", "bot_zeitwaechter": "#4a0a5a",
 }
+# --- Upgrade-Symbole (ebenfalls in atlas_bots.png)
+UPS = {
+    "up_kerne": "#08425a", "up_tempo": "#7a3a00", "up_glueck": "#0d3a14", "up_reihen": "#1a2a6a",
+    "up_plaetze": "#6a3200", "up_planGlueck": "#0c2a5c", "up_werkzeug": "#2a3040", "up_scanner": "#5a3200",
+    "up_schnellwurf": "#5a0a18", "up_sockel": "#232a55", "up_splitter": "#08425a", "up_goldpin": "#5a3200",
+}
 # --- SVG-Platten und Symbole
 tile("close", 448, 224, "red", ico_close, 128)
 tile("plus", 576, 224, "gold", ico_plus, 128)
@@ -332,15 +338,15 @@ def main():
         for n, (x, y, sz, _) in ICONS3D.items():
             f.write(f'\t{n} = {{ {x}, {y}, {sz}, {sz} }},\n')
         f.write("}\n")
-    # --- zweite Bilddatei: Bots (5 pro Reihe, 192 px)
-    ims = icons3d.render({n: c for n, c in BOTS.items()}, 256, fill=0.87)
+    # --- zweite Bilddatei: Bots und Upgrade-Symbole (6 pro Reihe, 160 px)
+    ims = icons3d.render({n: c for n, c in {**BOTS, **UPS}.items()}, 256, fill=0.87)
     bots = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     with open(os.path.join(OUT, "atlas_bots_rects.lua"), "w", encoding="utf8") as f:
         f.write("local BSPR = {\n")
-        for i, n in enumerate(BOTS):
-            x, y = (i % 5) * 192, (i // 5) * 192
-            bots.alpha_composite(ims[n].resize((192, 192), Image.LANCZOS), (x, y))
-            f.write(f"\t{n} = {{ {x}, {y}, 192, 192 }},\n")
+        for i, n in enumerate({**BOTS, **UPS}):
+            x, y = (i % 6) * 160, (i // 6) * 160
+            bots.alpha_composite(ims[n].resize((160, 160), Image.LANCZOS), (x, y))
+            f.write(f"\t{n} = {{ {x}, {y}, 160, 160 }},\n")
         f.write("}\n")
     bots.save(os.path.join(OUT, "atlas_bots.png"), optimize=True)
     for tag, bg in (("grass", (120, 200, 70, 255)),):
