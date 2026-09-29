@@ -260,21 +260,28 @@ def plate(name, x, y, w, h, colour):
 def small(name, x, y, fn):
     SPRITES.append((name, x, y, 128, 128, svg_wrap(128, 128, 128, 128, fn())))
 
-tile("upgrades", 0, 0, "green", ico_upgrades)
-tile("aufgaben", 224, 0, "blue", ico_quests)
-tile("forschung", 448, 0, "purple", ico_research)
-tile("shop", 672, 0, "red", ico_shop)
-tile("rebirth", 0, 224, "pink", ico_rebirth)
-tile("index", 224, 224, "blue", ico_index)
+# --- 3D-Icons (ohne Platte), siehe tools/icons3d.py. name: (x, y, Größe, Konturfarbe)
+ICONS3D = {
+    "upgrades": (0, 0, 224, "#0d3a14"),
+    "aufgaben": (224, 0, 224, "#0c2a5c"),
+    "forschung": (448, 0, 224, "#2a1060"),
+    "shop": (672, 0, 224, "#5a0a18"),
+    "rebirth": (0, 224, 224, "#5a0f34"),
+    "index": (224, 224, 224, "#0c2a66"),
+    "nut": (896, 0, 128, "#5a3200"),
+    "gear": (896, 128, 128, "#2a1060"),
+    "clover": (896, 256, 128, "#0d3a14"),
+    "lock": (576, 448, 128, "#4a2c00"),
+    "star": (832, 448, 128, "#5a3200"),
+    "drop": (0, 448, 192, "#08425a"),
+    "potion_g": (192, 448, 128, "#0d3a14"),
+    "potion_y": (320, 448, 128, "#5a3200"),
+    "potion_p": (448, 448, 128, "#3a1060"),
+}
+# --- SVG-Platten und Symbole
 tile("close", 448, 224, "red", ico_close)
 tile("plus", 672, 224, "gold", ico_plus)
-small("nut", 896, 0, small_nut)
-small("gear", 896, 128, small_gear)
-small("clover", 896, 256, small_clover)
-small("lock", 576, 448, small_lock)
 small("glint", 704, 448, small_glint)
-small("star", 832, 448, small_star)
-plate("drop", 0, 448, 576, 192, "gold")
 plate("gold2", 0, 640, 256, 128, "gold")
 plate("gray2", 256, 640, 256, 128, "gray")
 plate("green2", 512, 640, 256, 128, "green")
@@ -297,13 +304,20 @@ def main():
             im = Image.open(io.BytesIO(png)).convert("RGBA").resize((w, h), Image.LANCZOS)
             atlas.alpha_composite(im, (x, y))
         br.close()
+    sys.path.insert(0, os.path.dirname(__file__))
+    import icons3d
+    ims = icons3d.render({n: v[3] for n, v in ICONS3D.items()}, 256, fill=0.93)
+    for n, (x, y, sz, _) in ICONS3D.items():
+        atlas.alpha_composite(ims[n].resize((sz, sz), Image.LANCZOS), (x, y))
     atlas.save(os.path.join(OUT, "atlas.png"), optimize=True)
     with open(os.path.join(OUT, "atlas_rects.lua"), "w", encoding="utf8") as f:
         f.write("local SPR = {\n")
         for name, x, y, w, h, _ in SPRITES:
             f.write(f'\t{name} = {{ {x}, {y}, {w}, {h} }},\n')
+        for n, (x, y, sz, _) in ICONS3D.items():
+            f.write(f'\t{n} = {{ {x}, {y}, {sz}, {sz} }},\n')
         f.write("}\n")
-    for tag, bg in (("dark", (34, 38, 52, 255)), ("grass", (120, 200, 70, 255))):
+    for tag, bg in (("grass", (120, 200, 70, 255)),):
         prev = Image.new("RGBA", (1024, 1024), bg); prev.alpha_composite(atlas)
         prev.convert("RGB").save(os.path.join(OUT, f"atlas_preview_{tag}.png"))
     print("fertig:", os.path.abspath(OUT))

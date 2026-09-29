@@ -27,21 +27,9 @@ local SOUND_IDS = { click = "rbxasset://sounds/clickfast.wav", buy = "rbxasset:/
 
 -- Ausschnitte im Atlas { x, y, Breite, Höhe }. Wird von tools/make_ui_atlas.py erzeugt.
 local SPR = {
-	upgrades = { 0, 0, 224, 224 },
-	aufgaben = { 224, 0, 224, 224 },
-	forschung = { 448, 0, 224, 224 },
-	shop = { 672, 0, 224, 224 },
-	rebirth = { 0, 224, 224, 224 },
-	index = { 224, 224, 224, 224 },
 	close = { 448, 224, 224, 224 },
 	plus = { 672, 224, 224, 224 },
-	nut = { 896, 0, 128, 128 },
-	gear = { 896, 128, 128, 128 },
-	clover = { 896, 256, 128, 128 },
-	lock = { 576, 448, 128, 128 },
 	glint = { 704, 448, 128, 128 },
-	star = { 832, 448, 128, 128 },
-	drop = { 0, 448, 576, 192 },
 	gold2 = { 0, 640, 256, 128 },
 	gray2 = { 256, 640, 256, 128 },
 	green2 = { 512, 640, 256, 128 },
@@ -50,6 +38,21 @@ local SPR = {
 	dark4 = { 512, 768, 512, 128 },
 	gray4 = { 0, 896, 512, 128 },
 	gold4 = { 512, 896, 512, 128 },
+	upgrades = { 0, 0, 224, 224 },
+	aufgaben = { 224, 0, 224, 224 },
+	forschung = { 448, 0, 224, 224 },
+	shop = { 672, 0, 224, 224 },
+	rebirth = { 0, 224, 224, 224 },
+	index = { 224, 224, 224, 224 },
+	nut = { 896, 0, 128, 128 },
+	gear = { 896, 128, 128, 128 },
+	clover = { 896, 256, 128, 128 },
+	lock = { 576, 448, 128, 128 },
+	star = { 832, 448, 128, 128 },
+	drop = { 0, 448, 192, 192 },
+	potion_g = { 192, 448, 128, 128 },
+	potion_y = { 320, 448, 128, 128 },
+	potion_p = { 448, 448, 128, 128 },
 }
 
 if ATLAS_ID:match("^%d+$") then
@@ -613,8 +616,12 @@ local function currencyPlate(cfg)
 		Size = UDim2.fromOffset(cfg.width, 60),
 		LayoutOrder = cfg.order,
 	}, currencyRow)
-	round(rim, 18)
-	outline(rim, 3)
+	if useAtlas then
+		rim.BackgroundTransparency = 1
+	else
+		round(rim, 18)
+		outline(rim, 3)
+	end
 	local bump = make("UIScale", {}, rim)
 	local inner = make("Frame", {
 		Name = "Inner",
@@ -622,8 +629,12 @@ local function currencyPlate(cfg)
 		Position = UDim2.fromOffset(3, 3),
 		Size = UDim2.new(1, -6, 1, -6),
 	}, rim)
-	round(inner, 15)
-	vgrad(inner, P.plate)
+	if useAtlas then
+		inner.BackgroundTransparency = 1
+	else
+		round(inner, 15)
+		vgrad(inner, P.plate)
+	end
 	local iconBox = make("Frame", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(6, 3),
@@ -632,6 +643,7 @@ local function currencyPlate(cfg)
 	}, inner)
 	cfg.icon(iconBox)
 	local value = text(inner, "0", 30, {
+		stroke = useAtlas and 4 or 3,
 		name = "Value", ax = AX.Left, sz = UDim2.new(1, -66, 0, 32), pos = UDim2.fromOffset(60, 1),
 	})
 	fit(value, 30)
@@ -692,10 +704,10 @@ local function tile(parent, cfg)
 	local holder = make("Frame", {
 		Name = cfg.key,
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(124, big and 108 or 116),
+		Size = UDim2.fromOffset(124, big and 112 or 116),
 		LayoutOrder = cfg.order,
 	}, parent)
-	local tsize = big and 100 or 84
+	local tsize = big and 108 or 84
 	local _, face = chunky(holder, {
 		Name = "Btn", Size = UDim2.fromOffset(tsize, tsize), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
 		pal = cfg.pal, radius = 16, depth = 5, spr = cfg.key, burst = true,
@@ -707,11 +719,11 @@ local function tile(parent, cfg)
 		end,
 	})
 	if big then
-		-- Beschriftung liegt auf dem unteren Teil des Knopfs
-		local lbl = text(face, cfg.label, 17, {
-			name = "Label", sz = UDim2.new(1.06, 0, 0, 20), pos = UDim2.new(0.5, 0, 0, 73), anchor = Vector2.new(0.5, 0),
+		-- Beschriftung liegt mit dicker Kontur über dem unteren Teil des Icons
+		local lbl = text(face, cfg.label, 20, {
+			name = "Label", sz = UDim2.new(1.2, 0, 0, 24), pos = UDim2.new(0.5, 0, 0.86, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4,
 		})
-		fit(lbl, 17)
+		fit(lbl, 20)
 	else
 		glyph(face, cfg.emoji, 46, { pos = UDim2.fromOffset(0, -2) })
 		local lbl = text(holder, cfg.label, 20, {
@@ -721,7 +733,7 @@ local function tile(parent, cfg)
 	end
 	local badge = make("Frame", {
 		Name = "Badge", BackgroundColor3 = C.white, Visible = false, AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, big and 44 or 36, 0, big and 6 or 4), Size = UDim2.fromOffset(28, 28), ZIndex = 6,
+		Position = UDim2.new(0.5, big and 48 or 36, 0, big and 10 or 4), Size = UDim2.fromOffset(28, 28), ZIndex = 6,
 	}, holder)
 	round(badge, 999)
 	outline(badge, 3)
@@ -758,11 +770,15 @@ do
 		Name = "Luck", BackgroundColor3 = C.white, AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 16, 1, -16), Size = UDim2.fromOffset(260, 56),
 	}, root)
-	round(luck, 28)
-	outline(luck, 3)
-	vgrad(luck, P.plate)
 	if useAtlas then
-		sprite(luck, "clover", { sz = UDim2.fromOffset(50, 50), pos = UDim2.fromOffset(4, 3), z = 3 })
+		luck.BackgroundTransparency = 1
+	else
+		round(luck, 28)
+		outline(luck, 3)
+		vgrad(luck, P.plate)
+	end
+	if useAtlas then
+		sprite(luck, "clover", { sz = UDim2.fromOffset(58, 58), pos = UDim2.fromOffset(0, -1), z = 3 })
 	else
 		local clover = make("Frame", {
 			BackgroundColor3 = C.white, Position = UDim2.fromOffset(5, 5), Size = UDim2.fromOffset(46, 46), ZIndex = 3,
@@ -800,7 +816,8 @@ make("UIListLayout", {
 local dropFill, dropHint, autoRecolor
 do
 	local _, face = chunky(root, {
-		Name = "Drop", Size = UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24),
+		Name = "Drop", Size = useAtlas and UDim2.fromOffset(184, 184) or UDim2.fromOffset(290, 100), AnchorPoint = Vector2.new(0.5, 1),
+		Position = useAtlas and UDim2.new(0.5, 0, 1, -40) or UDim2.new(0.5, 0, 1, -24),
 		pal = P.gold, radius = 26, depth = 9, spr = "drop", burst = true,
 		onClick = function()
 			if UI.onDrop then
@@ -808,20 +825,34 @@ do
 			end
 		end,
 	})
-	local lbl = text(face, "DROP", 50, { sz = UDim2.new(1, 0, 0, 62), pos = UDim2.fromOffset(0, 4), stroke = 4 })
-	lbl.TextColor3 = C.white
-	local track = make("Frame", {
-		Name = "Track", BackgroundColor3 = Color3.fromRGB(120, 52, 0), BackgroundTransparency = 0.35,
-		Position = UDim2.new(0.1, 0, 0, 68), Size = UDim2.new(0.8, 0, 0, 12), ZIndex = 3,
-	}, face)
-	round(track, 999)
-	dropFill = make("Frame", {
-		Name = "Fill", BackgroundColor3 = C.white, BackgroundTransparency = 0.05, Size = UDim2.fromScale(0, 1), ZIndex = 4,
-	}, track)
-	round(dropFill, 999)
+	if useAtlas then
+		text(face, "DROP", 46, { sz = UDim2.new(1.3, 0, 0, 52), pos = UDim2.new(0.5, 0, 0.84, 0), anchor = Vector2.new(0.5, 0.5), stroke = 5 })
+		local track = make("Frame", {
+			Name = "Track", BackgroundColor3 = C.ink, BackgroundTransparency = 0.25,
+			AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(150, 14),
+		}, root)
+		round(track, 999)
+		outline(track, 2)
+		dropFill = make("Frame", {
+			Name = "Fill", BackgroundColor3 = Color3.fromRGB(80, 230, 255), Size = UDim2.fromScale(0, 1), ZIndex = 2,
+		}, track)
+		round(dropFill, 999)
+	else
+		local lbl = text(face, "DROP", 50, { sz = UDim2.new(1, 0, 0, 62), pos = UDim2.fromOffset(0, 4), stroke = 4 })
+		lbl.TextColor3 = C.white
+		local track = make("Frame", {
+			Name = "Track", BackgroundColor3 = Color3.fromRGB(120, 52, 0), BackgroundTransparency = 0.35,
+			Position = UDim2.new(0.1, 0, 0, 68), Size = UDim2.new(0.8, 0, 0, 12), ZIndex = 3,
+		}, face)
+		round(track, 999)
+		dropFill = make("Frame", {
+			Name = "Fill", BackgroundColor3 = C.white, BackgroundTransparency = 0.05, Size = UDim2.fromScale(0, 1), ZIndex = 4,
+		}, track)
+		round(dropFill, 999)
+	end
 
 	local _, aFace, _, recolor = chunky(root, {
-		Name = "Auto", Size = UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -170, 1, -30),
+		Name = "Auto", Size = UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -120 or -170, 1, useAtlas and -50 or -30),
 		pal = P.gray, radius = 16, depth = 6, spr = "gray2", text = "AUTO", textSize = 26,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
@@ -835,11 +866,11 @@ do
 	UI._autoState = aState
 
 	dropHint = glyph(root, "👇", 64, {
-		sz = UDim2.fromOffset(80, 80), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -128),
+		sz = UDim2.fromOffset(80, 80), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, useAtlas and -230 or -128),
 	})
 	dropHint.Visible = false
 	TweenService:Create(dropHint, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-		Position = UDim2.new(0.5, 0, 1, -146),
+		Position = UDim2.new(0.5, 0, 1, useAtlas and -248 or -146),
 	}):Play()
 end
 
@@ -870,10 +901,17 @@ local function makeWindow(cfg)
 	local iconBox = make("Frame", {
 		BackgroundColor3 = C.white, Position = UDim2.fromOffset(14, 9), Size = UDim2.fromOffset(46, 46), ZIndex = 4,
 	}, head)
-	round(iconBox, 12)
-	outline(iconBox, 3)
-	vgrad(iconBox, cfg.iconPal or P.green)
-	glyph(iconBox, cfg.emoji, 28)
+	if useAtlas and SPR[cfg.key] then
+		iconBox.BackgroundTransparency = 1
+		iconBox.Size = UDim2.fromOffset(56, 56)
+		iconBox.Position = UDim2.fromOffset(10, 4)
+		sprite(iconBox, cfg.key, { z = 3 })
+	else
+		round(iconBox, 12)
+		outline(iconBox, 3)
+		vgrad(iconBox, cfg.iconPal or P.green)
+		glyph(iconBox, cfg.emoji, 28)
+	end
 	text(head, cfg.title, 32, { ax = AX.Left, sz = UDim2.new(1, -150, 1, 0), pos = UDim2.fromOffset(72, 0), z = 4 })
 
 	local isOpen = false
@@ -1093,7 +1131,11 @@ do
 	}
 	for _, d in ipairs(defs) do
 		local w = makeWindow({ key = d.key, title = d.title, emoji = d.emoji, pal = d.pal, iconPal = d.pal, width = 640, height = 420 })
-		glyph(w.body, d.emoji, 90, { sz = UDim2.new(1, 0, 0, 110), pos = UDim2.fromOffset(0, 40) })
+		if useAtlas and SPR[d.key] then
+			sprite(w.body, d.key, { sz = UDim2.fromOffset(120, 120), anchor = Vector2.new(0.5, 0), pos = UDim2.new(0.5, 0, 0, 30), z = 3 })
+		else
+			glyph(w.body, d.emoji, 90, { sz = UDim2.new(1, 0, 0, 110), pos = UDim2.fromOffset(0, 40) })
+		end
 		text(w.body, "Dieses Fenster bekommt den neuen Look als Nächstes.", 24, {
 			sz = UDim2.new(1, -60, 0, 60), pos = UDim2.fromOffset(30, 170), wrap = true, color = C.soft,
 		})
@@ -1106,7 +1148,7 @@ end
 local banner, bIcon, bGlyph, bName, bText
 do
 	banner = make("CanvasGroup", {
-		Name = "Banner", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -140), Size = UDim2.fromOffset(620, 100),
+		Name = "Banner", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -236), Size = UDim2.fromOffset(620, 100),
 		BackgroundColor3 = Color3.fromRGB(26, 22, 46), GroupTransparency = 1, Visible = false,
 	}, root)
 	round(banner, 10)
@@ -1136,12 +1178,12 @@ local function playBanner(cfg)
 		rainbow(bName)
 	end
 	bText.Text = cfg.text or ""
-	banner.Position = UDim2.new(0.5, 0, 1, -110)
+	banner.Position = UDim2.new(0.5, 0, 1, -206)
 	banner.GroupTransparency = 1
 	banner.Visible = true
-	tween(banner, 0.35, { Position = UDim2.new(0.5, 0, 1, -140), GroupTransparency = 0 }, Enum.EasingStyle.Back)
+	tween(banner, 0.35, { Position = UDim2.new(0.5, 0, 1, -236), GroupTransparency = 0 }, Enum.EasingStyle.Back)
 	task.wait(cfg.time or 3.5)
-	tween(banner, 0.3, { Position = UDim2.new(0.5, 0, 1, -160), GroupTransparency = 1 })
+	tween(banner, 0.3, { Position = UDim2.new(0.5, 0, 1, -256), GroupTransparency = 1 })
 	task.wait(0.32)
 	banner.Visible = false
 end
@@ -1219,12 +1261,17 @@ function UI.setBoosts(list)
 	end
 	for i, b in ipairs(list) do
 		local pillFrame = make("Frame", { BackgroundColor3 = C.white, Size = UDim2.fromOffset(200, 34), LayoutOrder = i }, boostList)
-		round(pillFrame, 17)
-		outline(pillFrame, 3)
-		vgrad(pillFrame, P.plate)
-		local dot = make("Frame", { BackgroundColor3 = b.color or P.green[1], Position = UDim2.fromOffset(9, 9), Size = UDim2.fromOffset(16, 16), ZIndex = 3 }, pillFrame)
-		round(dot, 999)
-		outline(dot, 2)
+		if useAtlas then
+			pillFrame.BackgroundTransparency = 1
+			sprite(pillFrame, b.kind == "schrauben" and "potion_y" or (b.kind == "turbo" and "potion_p" or "potion_g"), { sz = UDim2.fromOffset(34, 34), z = 3 })
+		else
+			round(pillFrame, 17)
+			outline(pillFrame, 3)
+			vgrad(pillFrame, P.plate)
+			local dot = make("Frame", { BackgroundColor3 = b.color or P.green[1], Position = UDim2.fromOffset(9, 9), Size = UDim2.fromOffset(16, 16), ZIndex = 3 }, pillFrame)
+			round(dot, 999)
+			outline(dot, 2)
+		end
 		text(pillFrame, b.name, 17, { ax = AX.Left, sz = UDim2.new(1, -90, 1, 0), pos = UDim2.fromOffset(34, 0), stroke = 2 })
 		text(pillFrame, string.format("%d:%02d", math.floor(b.seconds / 60), b.seconds % 60), 17, {
 			ax = AX.Right, sz = UDim2.fromOffset(60, 34), pos = UDim2.new(1, -10, 0, 0), anchor = Vector2.new(1, 0), stroke = 2, color = Color3.fromRGB(255, 230, 150),
@@ -1354,8 +1401,8 @@ if DEMO then
 	UI.setBadge("aufgaben", 2)
 	UI.setBadge("shop", true)
 	UI.setBoosts({
-		{ name = "Glückstrank", seconds = 214, color = P.green[1] },
-		{ name = "Geld ×2", seconds = 96, color = P.gold[1] },
+		{ name = "Glückstrank", seconds = 214, color = P.green[1], kind = "glueck" },
+		{ name = "Geld ×2", seconds = 96, color = P.gold[1], kind = "schrauben" },
 	})
 	UI.showHint(true)
 

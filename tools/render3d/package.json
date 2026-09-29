@@ -1,0 +1,1 @@
+{ "name": "drop-a-bot-icons", "private": true, "description": "3D-Renderer für die UI-Icons (three.js)", "dependencies": { "three": "^0.170.0" } }
