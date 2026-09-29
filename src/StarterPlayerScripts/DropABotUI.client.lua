@@ -958,8 +958,8 @@ do
 	end
 
 	local _, aFace, _, recolor = chunky(root, {
-		Name = "Auto", Size = UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -120 or -170, 1, useAtlas and -50 or -30),
-		pal = P.gray, radius = 16, depth = 6, spr = "gray2", text = "AUTO", textSize = 26,
+		Name = "Auto", Size = useAtlas and UDim2.fromOffset(92, 92) or UDim2.fromOffset(120, 64), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, useAtlas and -120 or -170, 1, useAtlas and -50 or -30),
+		pal = P.gray, radius = 16, depth = 6, spr = useAtlas and "gear" or "gray2", text = (not useAtlas) and "AUTO" or nil, textSize = 26, burst = useAtlas,
 		onClick = function()
 			UI.setAuto(not UI.state.auto)
 			if UI.onAutoToggle then
@@ -968,8 +968,32 @@ do
 		end,
 	})
 	autoRecolor = recolor
-	local aState = text(aFace, "AUS", 14, { sz = UDim2.new(1, 0, 0, 16), pos = UDim2.new(0, 0, 1, -22), stroke = 2, name = "State" })
-	UI._autoState = aState
+	if useAtlas then
+		-- Zahnrad-Symbol: dreht sich, solange Auto an ist
+		local art = aFace.Parent and aFace.Parent:FindFirstChild("Art")
+		local aLabel = text(aFace, "AUTO AUS", 17, { sz = UDim2.new(1.2, 0, 0, 22), pos = UDim2.new(0.5, 0, 0.9, 0), anchor = Vector2.new(0.5, 0.5), stroke = 4 })
+		local spin
+		UI._autoSet = function(on)
+			aLabel.Text = on and "AUTO AN" or "AUTO AUS"
+			if spin then
+				spin:Cancel()
+				spin = nil
+			end
+			if art then
+				art.Rotation = 0
+				art.ImageColor3 = on and C.white or Color3.fromRGB(150, 150, 165)
+				if on then
+					spin = TweenService:Create(art, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1), { Rotation = 360 })
+					spin:Play()
+				end
+			end
+		end
+	else
+		local aState = text(aFace, "AUS", 14, { sz = UDim2.new(1, 0, 0, 16), pos = UDim2.new(0, 0, 1, -22), stroke = 2, name = "State" })
+		UI._autoSet = function(on)
+			aState.Text = on and "AN" or "AUS"
+		end
+	end
 
 	dropHint = glyph(root, "👇", 64, {
 		sz = UDim2.fromOffset(80, 80), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, useAtlas and -230 or -128),
@@ -1525,7 +1549,7 @@ end
 function UI.setAuto(on)
 	UI.state.auto = on
 	autoRecolor(on and P.green or P.gray, on and "green2" or "gray2")
-	UI._autoState.Text = on and "AN" or "AUS"
+	UI._autoSet(on)
 end
 
 function UI.popup(str, color)

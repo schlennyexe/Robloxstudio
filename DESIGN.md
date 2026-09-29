@@ -90,7 +90,8 @@ Weitere Bots: Modell in `tools/render3d/icons.html` ergänzen und in `BOTS` (`to
 
 - Darüberfahren: Knopf wächst leicht und wackelt kurz.
 - Drücken: Knopf wird gequetscht, beim Loslassen federt er elastisch zurück.
-- Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch.
+- Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`), der Orb schwebt leicht.
+- AUTO: Zahnrad-Symbol, dreht sich, solange Auto an ist.
 - Geräusche: `SOUND_IDS` oben im Skript. Leer lassen = stumm.
 
 ## Welt und Licht (WorldLook)
