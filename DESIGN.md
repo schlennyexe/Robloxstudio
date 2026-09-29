@@ -103,6 +103,7 @@ ihre Größe (`k()` rechnet sie um). Alles andere wächst mit.
 - Klick: Ring und Funken. Kauf: zusätzlich Kauf-Geräusch. DROP: Zahl steigt auf (`UI.popup`).
 - AUTO: kleiner 3D-Kippschalter. Aus = grau, Knopf links, "AUS". An = grün, Knopf rechts, "AN".
 - DROP: großer 3D-Würfel (Kern) mit Pfeil nach unten. Andere Entwürfe: Trichter mit Kern (`drop_c`), Kristall (`drop_d`), Arcade-Knopf (`drop_arcade`) in `tools/render3d/icons.html`.
+- Klick-Sound aller Knöpfe: eigene Audio-ID `139719503904449` (`SOUND_IDS.click`). Lädt sie nicht, nimmt das Skript automatisch den weichen Ersatzton und schreibt eine Zeile in den Output.
 - Geräusche: leise und sanft. Eigene Töne: `assets/audio/click.wav` und `buy.wav` in Studio hochladen (Asset-Manager › Audio) und die IDs in `SOUND_IDS` eintragen. Ohne eigene IDs nimmt das Skript weiche Töne, die in Roblox eingebaut sind, und wählt nur, was wirklich lädt.
 
 ## Welt und Licht (WorldLook)

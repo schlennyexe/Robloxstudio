@@ -33,7 +33,8 @@ local BOT_ATLAS_ID = ""
 
 -- Klick-Geräusche: leise und sanft. Eigene Töne haben Vorrang: assets/audio/click.wav und buy.wav in Studio hochladen
 -- (Asset-Manager > Audio > Massen-Import) und die ID hier eintragen. Leer lassen = weiche Töne, die in Roblox eingebaut sind.
-local SOUND_IDS = { click = "", buy = "", hover = "" }
+-- click = dein eigener Klick-Sound für alle Knöpfe. Lädt er nicht (falsche ID, noch in Prüfung), nimmt das Skript den weichen Ersatz.
+local SOUND_IDS = { click = "139719503904449", buy = "", hover = "" }
 local SOUND_FALLBACK = {
 	click = { "rbxasset://sounds/switch.mp3", "rbxasset://sounds/snap.mp3" },
 	buy = { "rbxasset://sounds/switch.mp3", "rbxasset://sounds/snap.mp3" },
@@ -403,6 +404,8 @@ for _, key in ipairs({ "click", "buy", "hover" }) do
 			if ok then
 				soundPick[key] = { id = c[1], own = c[2] }
 				return
+			elseif c[2] then
+				print("[DropABotUI] Eigener Sound '" .. key .. "' (" .. c[1] .. ") laedt nicht - Ersatzton wird genommen.")
 			end
 		end
 	end)
@@ -414,7 +417,7 @@ local function playSound(key)
 		return
 	end
 	local snd = make("Sound", {
-		SoundId = pick.id, Volume = SOUND_VOLUME[key] or 0.2, PlaybackSpeed = pick.own and 1 or (0.94 + math.random() * 0.1),
+		SoundId = pick.id, Volume = (SOUND_VOLUME[key] or 0.2) * (pick.own and 1.8 or 1), PlaybackSpeed = pick.own and 1 or (0.94 + math.random() * 0.1),
 	}, SoundService)
 	if not pick.own then
 		-- eingebaute Töne: hohe Frequenzen absenken, damit es weicher klingt
