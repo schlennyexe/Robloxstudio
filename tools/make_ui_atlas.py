@@ -278,6 +278,7 @@ ICONS3D = {
     "potion_g": (192, 448, 128, "#0d3a14"),
     "potion_y": (320, 448, 128, "#5a3200"),
     "potion_p": (448, 448, 128, "#3a1060"),
+    "hand": (448, 352, 96, "#20242f"),
 }
 # --- Bots (zweite Bilddatei atlas_bots.png), Konturfarbe = dunkle Seltenheitsfarbe
 BOTS = {

@@ -57,6 +57,7 @@ local SPR = {
 	potion_g = { 192, 448, 128, 128 },
 	potion_y = { 320, 448, 128, 128 },
 	potion_p = { 448, 448, 128, 128 },
+	hand = { 448, 352, 96, 96 },
 }
 
 -- Ausschnitte der Bot-Bilder, erzeugt von tools/make_ui_atlas.py
@@ -996,9 +997,15 @@ do
 		end
 	end
 
-	dropHint = glyph(root, "👇", 64, {
-		sz = UDim2.fromOffset(80, 80), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, useAtlas and -230 or -128),
-	})
+	if useAtlas and SPR.hand then
+		dropHint = sprite(root, "hand", {
+			name = "Hint", sz = UDim2.fromOffset(88, 88), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, -230), z = 5,
+		})
+	else
+		dropHint = glyph(root, "👇", 64, {
+			sz = UDim2.fromOffset(80, 80), anchor = Vector2.new(0.5, 1), pos = UDim2.new(0.5, 0, 1, useAtlas and -230 or -128),
+		})
+	end
 	dropHint.Visible = false
 	TweenService:Create(dropHint, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
 		Position = UDim2.new(0.5, 0, 1, useAtlas and -248 or -146),
@@ -1026,6 +1033,7 @@ local function makeWindow(cfg)
 	local head = make("Frame", {
 		Name = "Header", BackgroundColor3 = C.white, BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 64),
 	}, win)
+	round(head, 16)   -- obere Ecken rund, auch wenn das Fenster nicht rund abschneidet
 	vgrad(head, cfg.pal)
 	stripes(head, cfg.width, 64, C.white, 0.9, 30, 14, 35)
 	gloss(head, 12, 0.6)
